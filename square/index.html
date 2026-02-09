@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Square Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+        }
+
+        .main {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            max-width: 1100px;
+            gap: 24px;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                overflow-y: auto;
+                align-items: flex-start;
+            }
+            .main {
+                flex-direction: column;
+                padding-bottom: 20px;
+            }
+            .container {
+                order: 1;
+            }
+            .layout-side:first-child {
+                order: 2;
+                max-width: none;
+            }
+            .layout-side:last-child {
+                display: none;
+            }
+        }
+
+        .layout-side {
+            flex: 1;
+            min-width: 0;
+            max-width: 260px;
+        }
+
+        .rules-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-height: 100vh;
+            overflow-y: auto;
+        }
+
+        .rules-panel h2 {
+            font-size: 1.1em;
+            color: #333;
+            margin-bottom: 12px;
+            padding-bottom: 6px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .rules-panel ul {
+            list-style: none;
+            font-size: 0.85em;
+            line-height: 1.7;
+            color: #444;
+        }
+
+        .rules-panel li {
+            margin-bottom: 8px;
+            padding-left: 1em;
+            position: relative;
+        }
+
+        .rules-panel li::before {
+            content: "・";
+            position: absolute;
+            left: 0;
+            color: #667eea;
+        }
+
+        .container {
+            background: white;
+            border-radius: 15px;
+            padding: 15px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 600px;
+            flex-shrink: 0;
+            max-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 1.5em;
+        }
+
+        .info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 0.9em;
+            font-weight: bold;
+        }
+
+        .score {
+            color: #667eea;
+        }
+
+        .timer {
+            color: #764ba2;
+        }
+
+        .grid-wrapper {
+            position: relative;
+            flex: 1;
+            min-height: 0;
+            margin-bottom: 10px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 2px;
+            background: #ddd;
+            padding: 2px;
+            border-radius: 10px;
+            height: 100%;
+        }
+
+        .cell {
+            aspect-ratio: 1;
+            background: white;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.9em;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+        }
+
+        .cell:hover:not(.locked) {
+            transform: scale(1.05);
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .cell.white {
+            background: white;
+            color: #333;
+        }
+
+        .cell.red {
+            background: #e74c3c;
+        }
+
+        .cell.blue {
+            background: #3498db;
+        }
+
+        .cell.yellow {
+            background: #f1c40f;
+            color: #333;
+        }
+
+        .cell.locked {
+            cursor: pointer;
+            opacity: 0.8;
+            border: 2px solid #333;
+            font-size: 1.1em;
+        }
+
+        .cell.locked:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .cell.clearing {
+            animation: cellClear 0.35s ease-out forwards;
+        }
+
+        @keyframes cellClear {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+                filter: brightness(1);
+            }
+            40% {
+                transform: scale(1.25);
+                opacity: 1;
+                filter: brightness(1.4);
+            }
+            100% {
+                transform: scale(0.3);
+                opacity: 0;
+                filter: brightness(2);
+            }
+        }
+
+        .float-score {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #2ecc71;
+            text-shadow: 0 0 10px rgba(46, 204, 113, 0.8), 0 2px 4px rgba(0,0,0,0.3);
+            pointer-events: none;
+            z-index: 20;
+            animation: floatScore 2.2s ease-out forwards;
+        }
+
+        @keyframes floatScore {
+            0% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.5);
+            }
+            12% {
+                opacity: 1;
+                transform: translate(-50%, -55%) scale(1.2);
+            }
+            70% {
+                opacity: 1;
+                transform: translate(-50%, -65%) scale(1.1);
+            }
+            100% {
+                opacity: 0;
+                transform: translate(-50%, -80%) scale(1);
+            }
+        }
+
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            font-size: 0.9em;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background: #764ba2;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .message {
+            text-align: center;
+            margin-top: 8px;
+            font-size: 0.85em;
+            min-height: 20px;
+            color: #27ae60;
+            font-weight: bold;
+        }
+
+        .game-over-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .game-over-overlay.show {
+            display: flex;
+        }
+
+        .game-over-box {
+            background: white;
+            padding: 2em 3em;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+        }
+
+        .game-over-box h2 {
+            font-size: 2em;
+            color: #e74c3c;
+            margin-bottom: 0.5em;
+        }
+
+        .game-over-box p {
+            font-size: 0.95em;
+            color: #666;
+            margin-bottom: 1.2em;
+        }
+
+        .game-over-box .btn-reset {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 28px;
+            font-size: 1em;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .game-over-box .btn-reset:hover {
+            background: #764ba2;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div id="gameOverPopup" class="game-over-overlay">
+        <div class="game-over-box">
+            <h2>ゲームオーバー</h2>
+            <p>リセットして再挑戦</p>
+            <button class="btn-reset" onclick="resetGame()">リセット</button>
+        </div>
+    </div>
+    <div class="main">
+        <div class="layout-side">
+            <aside class="rules-panel">
+                <h2>ルール</h2>
+                <ul>
+                    <li>マスをクリックで色が変わる（白→赤→青→黄→赤）</li>
+                    <li>10秒ごとに白マス数に応じて固定マスが出現（12個以下→1個、24個以下→2個、36個以下→3個）</li>
+                    <li>固定マスの色で数字の範囲：赤1〜3、青4〜6、黄7〜9</li>
+                    <li>固定マスをクリックすると、そのマスを含む同じ色の最大の正方形が消える</li>
+                    <li>得点＝（消した正方形内の数字の合計）×（消したマス数）</li>
+                    <li>数字のないブロックを消しても得点は入らない</li>
+                    <li>白いマスが0個になるとゲームオーバー</li>
+                </ul>
+            </aside>
+        </div>
+        <div class="container">
+            <h1>Square Game</h1>
+            <div class="info">
+                <div class="score">スコア: <span id="score">0</span></div>
+                <div class="timer">次の固定マスまで: <span id="timer">30</span>秒</div>
+            </div>
+            <div class="grid-wrapper" id="gridWrapper">
+                <div class="grid" id="grid"></div>
+            </div>
+            <div class="message" id="message"></div>
+        </div>
+        <div class="layout-side"></div>
+    </div>
+
+    <script>
+        const GRID_SIZE = 6;
+        const COLORS = ['white', 'red', 'blue', 'yellow'];
+        const FIXED_INTERVAL = 10000; // 10秒ごとに固定マスを生成
+
+        let grid = [];
+        let score = 0;
+        let timer = FIXED_INTERVAL / 1000;
+        let timerInterval = null;
+        let fixedCellInterval = null;
+
+        // グリッドの初期化
+        function initGrid() {
+            grid = [];
+            const gridElement = document.getElementById('grid');
+            gridElement.innerHTML = '';
+
+            for (let i = 0; i < GRID_SIZE; i++) {
+                grid[i] = [];
+                for (let j = 0; j < GRID_SIZE; j++) {
+                    grid[i][j] = {
+                        color: 0, // 0: white, 1: red, 2: blue, 3: yellow
+                        locked: false,
+                        number: null
+                    };
+
+                    const cell = document.createElement('div');
+                    cell.className = 'cell white';
+                    cell.dataset.row = i;
+                    cell.dataset.col = j;
+                    cell.addEventListener('click', () => handleCellClick(i, j));
+                    gridElement.appendChild(cell);
+                }
+            }
+        }
+
+        // セルのクリック処理
+        function handleCellClick(row, col) {
+            if (grid[row][col].locked) {
+                // 固定ブロックをクリックした場合のみ判定
+                checkAndRemoveSquaresWithFixed();
+                checkGameOver();
+                return;
+            }
+
+            // 通常のマス: 色を循環させる（白→赤→青→黄→赤）
+            grid[row][col].color = (grid[row][col].color + 1) % COLORS.length;
+            if (grid[row][col].color === 0) {
+                grid[row][col].color = 1; // 白から直接赤に
+            }
+
+            updateCellDisplay(row, col);
+            checkGameOver();
+        }
+
+        // セルの表示を更新
+        function updateCellDisplay(row, col) {
+            const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+            const cellData = grid[row][col];
+            
+            cell.className = `cell ${COLORS[cellData.color]}`;
+            if (cellData.locked) {
+                cell.classList.add('locked');
+                cell.textContent = cellData.number || '';
+            } else {
+                cell.textContent = '';
+            }
+        }
+
+        // 固定マスを含む最大サイズの正方形を1つ探して返す（見つからなければnull）
+        function findOneSquareWithFixed() {
+            for (let size = GRID_SIZE; size >= 2; size--) {
+                for (let i = 0; i <= GRID_SIZE - size; i++) {
+                    for (let j = 0; j <= GRID_SIZE - size; j++) {
+                        if (isSquareSameColor(i, j, size)) {
+                            // この正方形に固定マスが含まれているかチェック
+                            let hasFixed = false;
+                            for (let di = 0; di < size; di++) {
+                                for (let dj = 0; dj < size; dj++) {
+                                    if (grid[i + di][j + dj].locked) {
+                                        hasFixed = true;
+                                        break;
+                                    }
+                                }
+                                if (hasFixed) break;
+                            }
+                            if (hasFixed) {
+                                return { startRow: i, startCol: j, size };
+                            }
+                        }
+                    }
+                }
+            }
+            return null;
+        }
+
+        // 得点をグリッド上に一時表示
+        function showFloatingScore(points) {
+            const wrapper = document.getElementById('gridWrapper');
+            const el = document.createElement('div');
+            el.className = 'float-score';
+            el.textContent = '+' + points + '点';
+            wrapper.appendChild(el);
+            setTimeout(() => el.remove(), 2400);
+        }
+
+        // 固定マスを含む正方形ブロックを検出して削除（固定マスを含む場合のみ）
+        function checkAndRemoveSquaresWithFixed() {
+            let totalPoints = 0;
+
+            function removeNextSquare() {
+                const square = findOneSquareWithFixed();
+                if (square === null) {
+                    if (totalPoints > 0) {
+                        document.getElementById('score').textContent = score;
+                        showMessage(`+${totalPoints}点！`);
+                    }
+                    ensureFixedCells();
+                    return;
+                }
+
+                const { startRow, startCol, size } = square;
+                const removedCells = [];
+                let hasNumber = false;
+                let totalNumber = 0;
+
+                for (let di = 0; di < size; di++) {
+                    for (let dj = 0; dj < size; dj++) {
+                        const r = startRow + di;
+                        const c = startCol + dj;
+                        removedCells.push({ row: r, col: c, number: grid[r][c].number });
+                        if (grid[r][c].number !== null) {
+                            hasNumber = true;
+                            totalNumber += grid[r][c].number;
+                        }
+                    }
+                }
+
+                const cellCount = removedCells.length;
+                const points = hasNumber ? totalNumber * cellCount : 0;
+                if (hasNumber) {
+                    totalPoints += points;
+                    score += points;
+                    showFloatingScore(points);
+                }
+
+                // 消えるアニメーションを付与
+                removedCells.forEach(cell => {
+                    const cellEl = document.querySelector(`[data-row="${cell.row}"][data-col="${cell.col}"]`);
+                    if (cellEl) cellEl.classList.add('clearing');
+                });
+
+                setTimeout(() => {
+                    removedCells.forEach(cell => {
+                        grid[cell.row][cell.col].color = 0;
+                        grid[cell.row][cell.col].locked = false;
+                        grid[cell.row][cell.col].number = null;
+                        const cellEl = document.querySelector(`[data-row="${cell.row}"][data-col="${cell.col}"]`);
+                        if (cellEl) cellEl.classList.remove('clearing');
+                        updateCellDisplay(cell.row, cell.col);
+                    });
+                    document.getElementById('score').textContent = score;
+                    removeNextSquare();
+                }, 380);
+            }
+
+            removeNextSquare();
+        }
+
+        // 指定位置から指定サイズの正方形が同じ色かチェック
+        function isSquareSameColor(startRow, startCol, size) {
+            const firstColor = grid[startRow][startCol].color;
+            if (firstColor === 0) return false; // 白は除外
+
+            for (let i = startRow; i < startRow + size; i++) {
+                for (let j = startCol; j < startCol + size; j++) {
+                    if (grid[i][j].color !== firstColor) {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+        // 固定マスの数をカウント
+        function countFixedCells() {
+            let count = 0;
+            for (let i = 0; i < GRID_SIZE; i++) {
+                for (let j = 0; j < GRID_SIZE; j++) {
+                    if (grid[i][j].locked) {
+                        count++;
+                    }
+                }
+            }
+            return count;
+        }
+
+        // 白マス数に応じた固定マスの目標数（12個以下→1、24個以下→2、36個以下→3）
+        function getTargetFixedCount() {
+            const white = countWhiteCells();
+            if (white <= 12) return 1;
+            if (white <= 24) return 2;
+            return 3;
+        }
+
+        // 固定マスを目標数まで補充
+        function ensureFixedCells() {
+            const target = getTargetFixedCount();
+            while (countFixedCells() < target) {
+                createFixedCell();
+            }
+        }
+
+        // 白いマス（色が白のマス）の数をカウント
+        function countWhiteCells() {
+            let count = 0;
+            for (let i = 0; i < GRID_SIZE; i++) {
+                for (let j = 0; j < GRID_SIZE; j++) {
+                    if (grid[i][j].color === 0) {
+                        count++;
+                    }
+                }
+            }
+            return count;
+        }
+
+        // ゲームオーバー判定（白いマスが0なら表示してリセット）
+        function checkGameOver() {
+            if (countWhiteCells() === 0) {
+                showGameOver();
+            }
+        }
+
+        // ゲームオーバー表示（ポップアップを表示し、リセットはボタンで行う）
+        function showGameOver() {
+            document.getElementById('gameOverPopup').classList.add('show');
+            if (timerInterval) clearInterval(timerInterval);
+            if (fixedCellInterval) clearInterval(fixedCellInterval);
+            timerInterval = null;
+            fixedCellInterval = null;
+        }
+
+        // 固定マスを生成
+        function createFixedCell() {
+            // 固定ブロック以外のマスを探す
+            const candidateCells = [];
+            for (let i = 0; i < GRID_SIZE; i++) {
+                for (let j = 0; j < GRID_SIZE; j++) {
+                    if (!grid[i][j].locked) {
+                        candidateCells.push({ row: i, col: j });
+                    }
+                }
+            }
+
+            if (candidateCells.length === 0) {
+                return; // 固定ブロック以外のマスがない
+            }
+
+            // ランダムに1つ選ぶ
+            const randomCell = candidateCells[Math.floor(Math.random() * candidateCells.length)];
+            // 固定マスは必ず赤、青、黄色のいずれか（1: red, 2: blue, 3: yellow）
+            const randomColor = Math.floor(Math.random() * 3) + 1;
+            // 色に応じた数字: 赤1-3, 青4-6, 黄7-9（クリック回数とスコア期待値が比例するように）
+            const randomNumber = randomColor === 1
+                ? Math.floor(Math.random() * 3) + 1   // 赤 → 1-3
+                : randomColor === 2
+                    ? Math.floor(Math.random() * 3) + 4   // 青 → 4-6
+                    : Math.floor(Math.random() * 3) + 7;   // 黄 → 7-9
+
+            grid[randomCell.row][randomCell.col].locked = true;
+            grid[randomCell.row][randomCell.col].number = randomNumber;
+            grid[randomCell.row][randomCell.col].color = randomColor;
+            updateCellDisplay(randomCell.row, randomCell.col);
+            checkGameOver();
+        }
+
+        // タイマーの開始
+        function startTimer() {
+            timer = FIXED_INTERVAL / 1000;
+            document.getElementById('timer').textContent = timer;
+
+            if (timerInterval) {
+                clearInterval(timerInterval);
+            }
+            if (fixedCellInterval) {
+                clearInterval(fixedCellInterval);
+            }
+
+            timerInterval = setInterval(() => {
+                timer--;
+                document.getElementById('timer').textContent = timer;
+                if (timer <= 0) {
+                    timer = FIXED_INTERVAL / 1000;
+                    ensureFixedCells();
+                }
+            }, 1000);
+
+            fixedCellInterval = setInterval(() => {
+                ensureFixedCells();
+            }, FIXED_INTERVAL);
+        }
+
+        // メッセージ表示
+        function showMessage(text) {
+            const messageEl = document.getElementById('message');
+            messageEl.textContent = text;
+            setTimeout(() => {
+                messageEl.textContent = '';
+            }, 3000);
+        }
+
+        // ゲームリセット
+        function resetGame() {
+            document.getElementById('gameOverPopup').classList.remove('show');
+            score = 0;
+            document.getElementById('score').textContent = score;
+            initGrid();
+            ensureFixedCells();
+            startTimer();
+            showMessage('ゲームをリセットしました');
+        }
+
+        // 初期化
+        initGrid();
+        ensureFixedCells();
+        startTimer();
+    </script>
+</body>
+</html>
