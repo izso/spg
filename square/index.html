@@ -70,9 +70,39 @@
         .rules-panel h2 {
             font-size: 1.1em;
             color: #333;
-            margin-bottom: 12px;
-            padding-bottom: 6px;
+            margin-bottom: 8px;
+            padding-bottom: 4px;
             border-bottom: 2px solid #667eea;
+        }
+
+        .rules-tabs {
+            display: inline-flex;
+            gap: 6px;
+            margin-bottom: 10px;
+            border-radius: 999px;
+            background: rgba(102, 126, 234, 0.09);
+            padding: 3px;
+        }
+
+        .rules-tab {
+            border: none;
+            background: transparent;
+            padding: 3px 10px;
+            border-radius: 999px;
+            font-size: 0.8em;
+            cursor: pointer;
+            color: #666;
+            font-weight: 600;
+        }
+
+        .rules-tab.active {
+            background: #667eea;
+            color: #fff;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+        }
+
+        .rules-content {
+            margin-top: 2px;
         }
 
         .rules-panel ul {
@@ -132,6 +162,26 @@
 
         .timer {
             color: #764ba2;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+        }
+
+        .timebar {
+            width: 180px;
+            height: 12px;
+            background: rgba(118, 75, 162, 0.15);
+            border-radius: 999px;
+            overflow: hidden;
+            box-shadow: inset 0 2px 6px rgba(0,0,0,0.12);
+        }
+
+        .timebar-fill {
+            height: 100%;
+            width: 100%;
+            background: linear-gradient(90deg, #764ba2 0%, #667eea 100%);
+            border-radius: 999px;
+            transition: width 0.08s linear;
         }
 
         .grid-wrapper {
@@ -242,9 +292,6 @@
 
         .float-score {
             position: absolute;
-            left: 50%;
-            top: 50%;
-            transform: translate(-50%, -50%);
             font-size: 1.8em;
             font-weight: bold;
             color: #2ecc71;
@@ -298,6 +345,26 @@
             min-height: 20px;
             color: #27ae60;
             font-weight: bold;
+        }
+
+        .log {
+            margin-top: 8px;
+            padding: 8px 10px;
+            border-radius: 12px;
+            background: rgba(102, 126, 234, 0.08);
+            border: 1px solid rgba(102, 126, 234, 0.18);
+            min-height: calc(1.35em * 3 + 10px);
+            font-size: 0.82em;
+            line-height: 1.35;
+            color: #333;
+            overflow: hidden;
+        }
+
+        .log-line {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-variant-numeric: tabular-nums;
         }
 
         .game-over-overlay {
@@ -354,6 +421,14 @@
     </style>
 </head>
 <body>
+    <div id="modeSelectPopup" class="game-over-overlay show">
+        <div class="game-over-box">
+            <h2>モード選択</h2>
+            <p>遊び方を選んでください。</p>
+            <button class="btn-reset" onclick="selectMode('100')">100マスモード</button>
+            <button class="btn-reset" onclick="selectMode('infinite')" style="margin-left: 12px;">無限モード</button>
+        </div>
+    </div>
     <div id="gameOverPopup" class="game-over-overlay">
         <div class="game-over-box">
             <h2>ゲームオーバー</h2>
@@ -361,31 +436,60 @@
             <button class="btn-reset" onclick="resetGame()">リセット</button>
         </div>
     </div>
+    <div id="clearPopup" class="game-over-overlay">
+        <div class="game-over-box">
+            <h2>クリア！</h2>
+            <p>固定マスを100個消しました。</p>
+            <p>トータルスコア: <span id="clearScore">0</span></p>
+            <button class="btn-reset" onclick="resetGame()">リトライ</button>
+        </div>
+    </div>
     <div class="main">
         <div class="layout-side">
             <aside class="rules-panel">
-                <h2>ルール</h2>
-                <ul>
-                    <li>マスをクリックで色が変わる（白→赤→青→黄→赤）</li>
-                    <li>10秒ごとに固定マスが1〜3個追加される（非固定36-25個→3個追加、24-13個→2個追加、12-0個→1個追加）</li>
-                    <li>固定マスの色で数字の範囲：赤1〜3、青4〜6、黄7〜9</li>
-                    <li>固定マスをクリックすると、そのマスを含む同じ色の最大の正方形が消える</li>
-                    <li>得点＝（消した正方形内の数字の合計）×（消したマス数）</li>
-                    <li>数字のないブロックを消しても得点は入らない</li>
-                    <li>白いマスが0個になるとゲームオーバー</li>
-                </ul>
+                <h2>ルール / Rules</h2>
+                <div class="rules-tabs" role="tablist" aria-label="Rules language">
+                    <button id="rulesTabJa" class="rules-tab active" type="button" role="tab" aria-selected="true" aria-controls="rulesJa">日本語</button>
+                    <button id="rulesTabEn" class="rules-tab" type="button" role="tab" aria-selected="false" aria-controls="rulesEn">English</button>
+                </div>
+                <div class="rules-content">
+                    <ul id="rulesJa" role="tabpanel" aria-labelledby="rulesTabJa">
+                        <li>マスをクリックで色が変わる（白→赤→青→黄→赤）</li>
+                        <li>10秒ごとに固定マスが1〜3個追加される（非固定36-25個→3個追加、24-13個→2個追加、12-0個→1個追加）</li>
+                        <li>固定マスの色で数字の範囲：赤1〜3、青4〜6、黄7〜9</li>
+                        <li>固定マスをクリックすると、そのマスを含む同じ色の最大の正方形が消える</li>
+                        <li>得点＝（消した正方形内の数字の合計）×（消したマス数）</li>
+                        <li>数字のないブロックを消しても得点は入らない</li>
+                        <li>白いマスが0個になるとゲームオーバー</li>
+                        <li>100マスモードでは、固定マスを100個消すとクリア</li>
+                    </ul>
+                    <ul id="rulesEn" role="tabpanel" aria-labelledby="rulesTabEn" style="display:none;">
+                        <li>Click a cell to change its color (White → Red → Blue → Yellow → Red).</li>
+                        <li>Every 10 seconds, 1–3 fixed cells are added (3 when many non-fixed cells remain, then 2, then 1).</li>
+                        <li>Numbers depend on the fixed cell color: Red 1–3, Blue 4–6, Yellow 7–9.</li>
+                        <li>Clicking a fixed cell removes the largest same-colored square that includes that fixed cell.</li>
+                        <li>Score = (sum of numbers in the removed square) × (number of cells in the square).</li>
+                        <li>You get no score if the removed square contains no numbers.</li>
+                        <li>When there are no white cells left, the game is over.</li>
+                        <li>In 100-cell mode, clearing 100 fixed cells in total counts as a clear.</li>
+                    </ul>
+                </div>
             </aside>
         </div>
         <div class="container">
             <h1>Square Game</h1>
             <div class="info">
                 <div class="score">スコア: <span id="score">0</span></div>
-                <div class="timer">次の固定マスまで: <span id="timer">30</span>秒</div>
+                <div class="timer" aria-label="次の固定マスまで">
+                    <div class="timebar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100">
+                        <div id="timebarFill" class="timebar-fill"></div>
+                    </div>
+                </div>
             </div>
             <div class="grid-wrapper" id="gridWrapper">
                 <div class="grid" id="grid"></div>
             </div>
-            <div class="message" id="message"></div>
+            <div class="log" id="log" aria-label="ログ"></div>
         </div>
         <div class="layout-side"></div>
     </div>
@@ -394,12 +498,37 @@
         const GRID_SIZE = 6;
         const COLORS = ['white', 'red', 'blue', 'yellow'];
         const FIXED_INTERVAL = 10000; // 10秒ごとに固定マスを生成
+        const TIMEBAR_UPDATE_MS = 50;
 
         let grid = [];
         let score = 0;
-        let timer = FIXED_INTERVAL / 1000;
         let timerInterval = null;
         let fixedCellInterval = null;
+        let nextFixedAtMs = 0;
+        let lastPointer = { x: null, y: null };
+        const actionLogs = [];
+        const LOG_MAX_LINES = 3;
+        let gameMode = null; // '100' or 'infinite'
+        let clearedFixedCount = 0; // これまでに消した固定マス数（100マスモード用）
+        let isGameFinished = false; // ゲームオーバー or クリア後の操作無効化フラグ
+
+        function renderLogs() {
+            const el = document.getElementById('log');
+            if (!el) return;
+            el.innerHTML = '';
+            actionLogs.slice(0, LOG_MAX_LINES).forEach(line => {
+                const div = document.createElement('div');
+                div.className = 'log-line';
+                div.textContent = line;
+                el.appendChild(div);
+            });
+        }
+
+        function addLogLine(line) {
+            actionLogs.unshift(line);
+            if (actionLogs.length > LOG_MAX_LINES) actionLogs.length = LOG_MAX_LINES;
+            renderLogs();
+        }
 
         // グリッドの初期化
         function initGrid() {
@@ -420,17 +549,25 @@
                     cell.className = 'cell white';
                     cell.dataset.row = i;
                     cell.dataset.col = j;
-                    cell.addEventListener('click', () => handleCellClick(i, j));
+                    cell.addEventListener('click', (e) => handleCellClick(i, j, e));
                     gridElement.appendChild(cell);
                 }
             }
+            renderLogs();
         }
 
         // セルのクリック処理
-        function handleCellClick(row, col) {
+        function handleCellClick(row, col, event) {
+            if (isGameFinished) {
+                return;
+            }
+            if (event && typeof event.clientX === 'number' && typeof event.clientY === 'number') {
+                lastPointer = { x: event.clientX, y: event.clientY };
+            }
             if (grid[row][col].locked) {
                 // 固定ブロックをクリックした場合のみ判定
-                checkAndRemoveSquaresWithFixed();
+                // ※押した固定マスを必ず含む、同色の「最大正方形」だけを1つ消す
+                checkAndRemoveSquaresWithFixed(row, col);
                 checkGameOver();
                 return;
             }
@@ -459,26 +596,26 @@
             }
         }
 
-        // 固定マスを含む最大サイズの正方形を1つ探して返す（見つからなければnull）
-        function findOneSquareWithFixed() {
+        // 指定した固定マス(fixedRow,fixedCol)を必ず含む
+        // 「同色の最大サイズの正方形」を1つ探して返す（見つからなければnull）
+        function findLargestSquareIncludingFixed(fixedRow, fixedCol) {
+            if (!grid[fixedRow] || !grid[fixedRow][fixedCol] || !grid[fixedRow][fixedCol].locked) {
+                return null;
+            }
+
             for (let size = GRID_SIZE; size >= 2; size--) {
-                for (let i = 0; i <= GRID_SIZE - size; i++) {
-                    for (let j = 0; j <= GRID_SIZE - size; j++) {
-                        if (isSquareSameColor(i, j, size)) {
-                            // この正方形に固定マスが含まれているかチェック
-                            let hasFixed = false;
-                            for (let di = 0; di < size; di++) {
-                                for (let dj = 0; dj < size; dj++) {
-                                    if (grid[i + di][j + dj].locked) {
-                                        hasFixed = true;
-                                        break;
-                                    }
-                                }
-                                if (hasFixed) break;
-                            }
-                            if (hasFixed) {
-                                return { startRow: i, startCol: j, size };
-                            }
+                // このサイズの正方形のうち、(fixedRow,fixedCol) を含むものだけを走査
+                const startRowMin = Math.max(0, fixedRow - size + 1);
+                const startRowMax = Math.min(fixedRow, GRID_SIZE - size);
+                const startColMin = Math.max(0, fixedCol - size + 1);
+                const startColMax = Math.min(fixedCol, GRID_SIZE - size);
+
+                for (let sr = startRowMin; sr <= startRowMax; sr++) {
+                    for (let sc = startColMin; sc <= startColMax; sc++) {
+                        if (isSquareSameColor(sr, sc, size)) {
+                            // isSquareSameColor は同色かどうかだけ見る。
+                            // (fixedRow,fixedCol) は locked なので、「押した固定マスを含む同色正方形」がここで保証される。
+                            return { startRow: sr, startCol: sc, size };
                         }
                     }
                 }
@@ -487,75 +624,111 @@
         }
 
         // 得点をグリッド上に一時表示
-        function showFloatingScore(points) {
+        function showFloatingScore(points, clientX, clientY) {
             const wrapper = document.getElementById('gridWrapper');
+            if (!wrapper) return;
+            const rect = wrapper.getBoundingClientRect();
+
+            // clientX/Y が取れない場合は中央に表示
+            const x = (typeof clientX === 'number') ? clientX : (rect.left + rect.width / 2);
+            const y = (typeof clientY === 'number') ? clientY : (rect.top + rect.height / 2);
+
             const el = document.createElement('div');
             el.className = 'float-score';
             el.textContent = '+' + points + '点';
+            el.style.left = `${Math.max(0, Math.min(rect.width, x - rect.left))}px`;
+            el.style.top = `${Math.max(0, Math.min(rect.height, y - rect.top))}px`;
+            el.style.transform = 'translate(-50%, -60%)';
             wrapper.appendChild(el);
             setTimeout(() => el.remove(), 2400);
         }
 
-        // 固定マスを含む正方形ブロックを検出して削除（固定マスを含む場合のみ）
-        function checkAndRemoveSquaresWithFixed() {
-            let totalPoints = 0;
-
-            function removeNextSquare() {
-                const square = findOneSquareWithFixed();
-                if (square === null) {
-                    if (totalPoints > 0) {
-                        document.getElementById('score').textContent = score;
-                        showMessage(`+${totalPoints}点！`);
-                    }
-                    return;
-                }
-
-                const { startRow, startCol, size } = square;
-                const removedCells = [];
-                let hasNumber = false;
-                let totalNumber = 0;
-
-                for (let di = 0; di < size; di++) {
-                    for (let dj = 0; dj < size; dj++) {
-                        const r = startRow + di;
-                        const c = startCol + dj;
-                        removedCells.push({ row: r, col: c, number: grid[r][c].number });
-                        if (grid[r][c].number !== null) {
-                            hasNumber = true;
-                            totalNumber += grid[r][c].number;
-                        }
-                    }
-                }
-
-                const cellCount = removedCells.length;
-                const points = hasNumber ? totalNumber * cellCount : 0;
-                if (hasNumber) {
-                    totalPoints += points;
-                    score += points;
-                    showFloatingScore(points);
-                }
-
-                // 消えるアニメーションを付与
-                removedCells.forEach(cell => {
-                    const cellEl = document.querySelector(`[data-row="${cell.row}"][data-col="${cell.col}"]`);
-                    if (cellEl) cellEl.classList.add('clearing');
-                });
-
-                setTimeout(() => {
-                    removedCells.forEach(cell => {
-                        grid[cell.row][cell.col].color = 0;
-                        grid[cell.row][cell.col].locked = false;
-                        grid[cell.row][cell.col].number = null;
-                        const cellEl = document.querySelector(`[data-row="${cell.row}"][data-col="${cell.col}"]`);
-                        if (cellEl) cellEl.classList.remove('clearing');
-                        updateCellDisplay(cell.row, cell.col);
-                    });
-                    document.getElementById('score').textContent = score;
-                    removeNextSquare();
-                }, 380);
+        // 押した固定マスを含む「最大正方形」ブロックだけを検出して1つだけ削除
+        function checkAndRemoveSquaresWithFixed(fixedRow, fixedCol) {
+            const square = findLargestSquareIncludingFixed(fixedRow, fixedCol);
+            if (square === null) {
+                return; // 押した固定マスを含む同色正方形が存在しない
             }
 
-            removeNextSquare();
+            const { startRow, startCol, size } = square;
+            const removedCells = [];
+            let hasNumber = false;
+            let totalNumber = 0;
+            let shouldActivateBonusTime = false;
+            let fixedRemovedThisTime = 0;
+
+            for (let di = 0; di < size; di++) {
+                for (let dj = 0; dj < size; dj++) {
+                    const r = startRow + di;
+                    const c = startCol + dj;
+                    removedCells.push({ row: r, col: c, number: grid[r][c].number });
+                    if (grid[r][c].locked) {
+                        fixedRemovedThisTime++;
+                    }
+                    if (grid[r][c].number !== null) {
+                        hasNumber = true;
+                        totalNumber += grid[r][c].number;
+                    }
+                }
+            }
+
+            const cellCount = removedCells.length;
+            const points = hasNumber ? totalNumber * cellCount : 0;
+            score += points;
+            if (points > 0) {
+                showFloatingScore(points, lastPointer.x, lastPointer.y);
+            }
+
+            // ログ: どの数字のマス / 何×何サイズ / 何点
+            const numbers = removedCells.map(c => c.number).filter(n => n !== null);
+            let numbersDesc = '数字なし';
+            if (numbers.length > 0) {
+                const uniq = Array.from(new Set(numbers)).sort((a, b) => a - b);
+                if (uniq.length === 1) {
+                    numbersDesc = `数字${uniq[0]}×${numbers.length}`;
+                } else if (uniq.length <= 4) {
+                    numbersDesc = `数字${uniq.join('/')}`;
+                } else {
+                    numbersDesc = `数字${uniq.length}種`;
+                }
+            }
+            addLogLine(`${numbersDesc}（合計${totalNumber}） × ${cellCount}マス（${size}×${size}） = ${points}点`);
+
+            // ボーナス判定（おふざけボーナス・条件ゆるめ）:
+            // 「4×4サイズの正方形を消したとき、その中に数字9が1つでも含まれていれば発動」
+            if (size === 4 && removedCells.some(cell => cell.number === 9)) {
+                shouldActivateBonusTime = true;
+            }
+
+            // 消えるアニメーションを付与
+            removedCells.forEach(cell => {
+                const cellEl = document.querySelector(`[data-row="${cell.row}"][data-col="${cell.col}"]`);
+                if (cellEl) cellEl.classList.add('clearing');
+            });
+
+            setTimeout(() => {
+                removedCells.forEach(cell => {
+                    grid[cell.row][cell.col].color = 0;
+                    grid[cell.row][cell.col].locked = false;
+                    grid[cell.row][cell.col].number = null;
+                    const cellEl = document.querySelector(`[data-row="${cell.row}"][data-col="${cell.col}"]`);
+                    if (cellEl) cellEl.classList.remove('clearing');
+                    updateCellDisplay(cell.row, cell.col);
+                });
+                document.getElementById('score').textContent = score;
+
+                if (shouldActivateBonusTime) {
+                    activateBonusTime();
+                }
+
+                // 100マスモード: 固定マスを100個消したらクリア
+                if (gameMode === '100' && fixedRemovedThisTime > 0) {
+                    clearedFixedCount += fixedRemovedThisTime;
+                    if (clearedFixedCount >= 100) {
+                        showClearPopup();
+                    }
+                }
+            }, 380);
         }
 
         // 指定位置から指定サイズの正方形が同じ色かチェック
@@ -631,6 +804,20 @@
         // ゲームオーバー表示（ポップアップを表示し、リセットはボタンで行う）
         function showGameOver() {
             document.getElementById('gameOverPopup').classList.add('show');
+            isGameFinished = true;
+            if (timerInterval) clearInterval(timerInterval);
+            if (fixedCellInterval) clearInterval(fixedCellInterval);
+            timerInterval = null;
+            fixedCellInterval = null;
+        }
+
+        // 100マスモードのクリア表示（トータルスコアを表示）
+        function showClearPopup() {
+            const popup = document.getElementById('clearPopup');
+            const scoreEl = document.getElementById('clearScore');
+            if (scoreEl) scoreEl.textContent = score;
+            if (popup) popup.classList.add('show');
+            isGameFinished = true;
             if (timerInterval) clearInterval(timerInterval);
             if (fixedCellInterval) clearInterval(fixedCellInterval);
             timerInterval = null;
@@ -638,6 +825,75 @@
         }
 
         // 固定マスを生成（今ある固定マス以外のすべてのマス＝白・赤・青・黄が対象）
+        // 重要: 固定マスは「その固定マスを含む同色の正方形(2以上)」が作れないと永遠に消せない。
+        // 端の一列にバラバラ色の固定マスが増えると、正方形に別色の固定マスが混ざって詰みやすいので、
+        // 生成時に「この位置でその色の正方形が成立可能か（別色の固定マスが混ざらないか）」を判定して色を選ぶ。
+
+        function activateBonusTime() {
+            // 盤面上の「すべての固定マス」を赤9に変換
+            for (let i = 0; i < GRID_SIZE; i++) {
+                for (let j = 0; j < GRID_SIZE; j++) {
+                    if (grid[i][j].locked) {
+                        grid[i][j].color = 1;   // red
+                        grid[i][j].number = 9;  // 9点
+                        updateCellDisplay(i, j);
+                    }
+                }
+            }
+            // 「ボーナスタイム」は継続せず、この変換を行った時点で終了（以後の固定マス生成は通常通り）
+            addLogLine('ボーナス発動：固定マスを赤9に変換');
+        }
+
+        // (row,col) を固定マス（locked）かつ candidateColor とみなしたとき、
+        // “そのマスを含む” 同色正方形（サイズ2以上）を作れる色候補を返す。
+        // ここで「作れる」とは、正方形内の既存固定マスがすべて candidateColor で揃っていること。
+        // （非固定マスはプレイヤーが色変更できるため制約に含めない）
+        function getValidFixedColorsForCell(row, col) {
+            const valid = [];
+            for (let candidateColor = 1; candidateColor <= 3; candidateColor++) {
+                if (hasCompatibleSquareIncludingCell(row, col, candidateColor)) {
+                    valid.push(candidateColor);
+                }
+            }
+            return valid;
+        }
+
+        function hasCompatibleSquareIncludingCell(row, col, candidateColor) {
+            // サイズが大きいほど条件が厳しくなるので、小さい正方形から見て「1つでも作れる」ならOK
+            for (let size = 2; size <= GRID_SIZE; size++) {
+                const startRowMin = Math.max(0, row - size + 1);
+                const startRowMax = Math.min(row, GRID_SIZE - size);
+                const startColMin = Math.max(0, col - size + 1);
+                const startColMax = Math.min(col, GRID_SIZE - size);
+
+                for (let sr = startRowMin; sr <= startRowMax; sr++) {
+                    for (let sc = startColMin; sc <= startColMax; sc++) {
+                        if (isSquareLockedCompatible(sr, sc, size, row, col, candidateColor)) {
+                            return true;
+                        }
+                    }
+                }
+            }
+            return false;
+        }
+
+        // 正方形(sr,sc,size) に含まれる固定マスが candidateColor と両立するかを判定
+        // 対象セル(row,col)は「これから固定化される」前提で candidateColor として扱う。
+        function isSquareLockedCompatible(sr, sc, size, row, col, candidateColor) {
+            for (let r = sr; r < sr + size; r++) {
+                for (let c = sc; c < sc + size; c++) {
+                    if (r === row && c === col) {
+                        // これから置く固定マス（candidateColor）
+                        continue;
+                    }
+                    if (grid[r][c].locked && grid[r][c].color !== candidateColor) {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
         function createFixedCell() {
             // 固定マス以外（変化させられるマス）を候補にする
             const candidateCells = [];
@@ -653,10 +909,23 @@
                 return; // 固定ブロック以外のマスがない
             }
 
-            // ランダムに1つ選ぶ
-            const randomCell = candidateCells[Math.floor(Math.random() * candidateCells.length)];
+            // 「置いた瞬間に“消せない固定マス”が確定」しないよう、位置ごとに置ける色を判定する
+            const viable = [];
+            for (const cell of candidateCells) {
+                const validColors = getValidFixedColorsForCell(cell.row, cell.col);
+                if (validColors.length > 0) {
+                    viable.push({ cell, validColors });
+                }
+            }
+
+            // 可能な候補があるならそこから選ぶ（ない場合は従来通りランダムに置く）
+            const chosen = viable.length > 0
+                ? viable[Math.floor(Math.random() * viable.length)]
+                : { cell: candidateCells[Math.floor(Math.random() * candidateCells.length)], validColors: [1, 2, 3] };
+
+            const randomCell = chosen.cell;
             // 固定マスは必ず赤、青、黄色のいずれか（1: red, 2: blue, 3: yellow）
-            const randomColor = Math.floor(Math.random() * 3) + 1;
+            const randomColor = chosen.validColors[Math.floor(Math.random() * chosen.validColors.length)];
             // 色に応じた数字: 赤1-3, 青4-6, 黄7-9（クリック回数とスコア期待値が比例するように）
             const randomNumber = randomColor === 1
                 ? Math.floor(Math.random() * 3) + 1   // 赤 → 1-3
@@ -673,8 +942,17 @@
 
         // タイマーの開始（カウントダウン0で1回だけ固定マス追加。setIntervalは使わず1秒刻みのタイマーのみ）
         function startTimer() {
-            timer = FIXED_INTERVAL / 1000;
-            document.getElementById('timer').textContent = timer;
+            const fillEl = document.getElementById('timebarFill');
+            const barEl = fillEl?.parentElement;
+            nextFixedAtMs = Date.now() + FIXED_INTERVAL;
+
+            function setBar(ratio) {
+                const clamped = Math.max(0, Math.min(1, ratio));
+                if (fillEl) fillEl.style.width = `${clamped * 100}%`;
+                if (barEl) barEl.setAttribute('aria-valuenow', String(Math.round(clamped * 100)));
+            }
+
+            setBar(1);
 
             if (timerInterval) {
                 clearInterval(timerInterval);
@@ -685,39 +963,90 @@
             fixedCellInterval = null;
 
             timerInterval = setInterval(() => {
-                timer--;
-                document.getElementById('timer').textContent = timer;
-                if (timer <= 0) {
-                    timer = FIXED_INTERVAL / 1000;
+                const now = Date.now();
+
+                // 多少の遅延があっても取りこぼさない
+                while (now >= nextFixedAtMs) {
                     addFixedCellsOnTimer(); // ここだけで1回だけ1〜3個追加
+                    nextFixedAtMs += FIXED_INTERVAL;
                 }
-            }, 1000);
+
+                const remaining = nextFixedAtMs - now;
+                setBar(remaining / FIXED_INTERVAL);
+            }, TIMEBAR_UPDATE_MS);
         }
 
-        // メッセージ表示
-        function showMessage(text) {
-            const messageEl = document.getElementById('message');
-            messageEl.textContent = text;
-            setTimeout(() => {
-                messageEl.textContent = '';
-            }, 3000);
-        }
-
-        // ゲームリセット
+        // ゲームリセット（現在選択中のモードで再スタート）
         function resetGame() {
             document.getElementById('gameOverPopup').classList.remove('show');
+            const clearPopup = document.getElementById('clearPopup');
+            if (clearPopup) clearPopup.classList.remove('show');
+
+            if (!gameMode) {
+                gameMode = 'infinite';
+            }
+
+            isGameFinished = false;
+            clearedFixedCount = 0;
             score = 0;
             document.getElementById('score').textContent = score;
+            actionLogs.length = 0;
+            renderLogs();
+
             initGrid();
             addFixedCellsOnTimer();
             startTimer();
-            showMessage('ゲームをリセットしました');
+            addLogLine('ゲームをリセットしました');
         }
 
-        // 初期化
+        // モード選択後にゲーム開始
+        function selectMode(mode) {
+            gameMode = mode;
+            const modePopup = document.getElementById('modeSelectPopup');
+            if (modePopup) modePopup.classList.remove('show');
+
+            isGameFinished = false;
+            clearedFixedCount = 0;
+            score = 0;
+            document.getElementById('score').textContent = score;
+            actionLogs.length = 0;
+            renderLogs();
+
+            initGrid();
+            addFixedCellsOnTimer();
+            startTimer();
+            addLogLine(
+                mode === '100'
+                    ? '100マスモードを開始しました（固定マスを100個消すとクリア）'
+                    : '無限モードを開始しました'
+            );
+        }
+
+        // 初期化（盤面だけ準備しておき、開始はモード選択後）
         initGrid();
-        addFixedCellsOnTimer();
-        startTimer();
+
+        // ルールタブ切り替え
+        (function setupRuleTabs() {
+            const tabJa = document.getElementById('rulesTabJa');
+            const tabEn = document.getElementById('rulesTabEn');
+            const rulesJa = document.getElementById('rulesJa');
+            const rulesEn = document.getElementById('rulesEn');
+            if (!tabJa || !tabEn || !rulesJa || !rulesEn) return;
+
+            function activate(lang) {
+                const isJa = lang === 'ja';
+                tabJa.classList.toggle('active', isJa);
+                tabEn.classList.toggle('active', !isJa);
+                tabJa.setAttribute('aria-selected', isJa ? 'true' : 'false');
+                tabEn.setAttribute('aria-selected', !isJa ? 'true' : 'false');
+                rulesJa.style.display = isJa ? '' : 'none';
+                rulesEn.style.display = !isJa ? '' : 'none';
+            }
+
+            tabJa.addEventListener('click', () => activate('ja'));
+            tabEn.addEventListener('click', () => activate('en'));
+            activate('ja'); // デフォルト日本語
+        })();
     </script>
 </body>
 </html>
