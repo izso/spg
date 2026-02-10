@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>クエリビルダー</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    :root {
+      --twitter-blue: #1d9bf0;
+      --twitter-blue-dark: #1580c8;
+      --twitter-bg: #ffffff;
+      --twitter-bg-alt: #f5f8fa;
+      --twitter-text: #0f1419;
+      --twitter-border: #e1e8ed;
+      --error: #f4212e;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        sans-serif;
+      background: linear-gradient(135deg, #e8f5fd 0%, #ffffff 60%, #cfe9ff 100%);
+      color: var(--twitter-text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .app {
+      background-color: var(--twitter-bg);
+      border-radius: 16px;
+      box-shadow: 0 12px 30px rgba(15, 20, 25, 0.12);
+      max-width: 480px;
+      width: 100%;
+      padding: 24px 24px 20px;
+      border: 1px solid rgba(29, 155, 240, 0.2);
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .logo-circle {
+      width: 32px;
+      height: 32px;
+      border-radius: 999px;
+      background: var(--twitter-blue);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 700;
+      font-size: 18px;
+    }
+
+    .title-group {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .title {
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .subtitle {
+      font-size: 12px;
+      color: #536471;
+    }
+
+    .section {
+      margin-top: 16px;
+      padding-top: 12px;
+      border-top: 1px solid var(--twitter-border);
+    }
+
+    .section-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #536471;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .section-title-badge {
+      font-size: 11px;
+      padding: 2px 6px;
+      border-radius: 999px;
+      background-color: var(--twitter-bg-alt);
+      color: #536471;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      margin-bottom: 4px;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    input[type="text"],
+    input[type="date"] {
+      border-radius: 999px;
+      border: 1px solid var(--twitter-border);
+      padding: 8px 12px;
+      font-size: 14px;
+      outline: none;
+      width: 100%;
+      background-color: var(--twitter-bg-alt);
+      transition: border-color 0.15s ease, box-shadow 0.15s ease,
+        background-color 0.15s ease;
+    }
+
+    input[type="text"]:focus,
+    input[type="date"]:focus {
+      border-color: var(--twitter-blue);
+      box-shadow: 0 0 0 1px rgba(29, 155, 240, 0.3);
+      background-color: #ffffff;
+    }
+
+    .account-prefix {
+      font-size: 14px;
+      color: #536471;
+    }
+
+    .account-confirm-btn {
+      margin-left: auto;
+      padding-inline: 10px;
+      font-size: 12px;
+    }
+
+    .helper {
+      font-size: 11px;
+      color: #536471;
+      margin-top: 4px;
+    }
+
+    .error {
+      font-size: 12px;
+      color: var(--error);
+      margin-top: 4px;
+    }
+
+    .word-search-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-top: 8px;
+    }
+
+    .word-search-input {
+      flex: 1;
+    }
+
+    .rt-filter-row {
+      margin-top: 6px;
+      font-size: 12px;
+      color: #536471;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .rt-filter-row input[type="checkbox"] {
+      width: 14px;
+      height: 14px;
+      accent-color: var(--twitter-blue);
+      cursor: pointer;
+    }
+
+    .btn {
+      border-radius: 999px;
+      border: none;
+      padding: 8px 14px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: background-color 0.15s ease, box-shadow 0.15s ease,
+        transform 0.08s ease;
+      white-space: nowrap;
+    }
+
+    .btn-primary {
+      background-color: var(--twitter-blue);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background-color: var(--twitter-blue-dark);
+      box-shadow: 0 0 0 1px rgba(29, 155, 240, 0.4),
+        0 8px 18px rgba(15, 20, 25, 0.18);
+      transform: translateY(-1px);
+    }
+
+    .btn-primary:active {
+      transform: translateY(0);
+      box-shadow: 0 0 0 1px rgba(29, 155, 240, 0.4),
+        0 3px 8px rgba(15, 20, 25, 0.24);
+    }
+
+    .btn-secondary {
+      background-color: var(--twitter-blue);
+      color: #ffffff;
+      border: 1px solid rgba(29, 155, 240, 0.4);
+      padding-inline: 10px;
+      font-size: 12px;
+    }
+
+    .btn-secondary:hover {
+      background-color: var(--twitter-blue-dark);
+    }
+
+    .hint {
+      font-size: 11px;
+      color: #536471;
+      text-align: right;
+    }
+
+    .calendar-wrapper {
+      margin-top: 8px;
+      padding: 14px 12px 16px;
+      border-radius: 16px;
+      background-color: var(--twitter-bg-alt);
+    }
+
+    .calendar-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
+    }
+
+    .calendar-month-label {
+      font-size: 13px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .calendar-select {
+      border-radius: 999px;
+      border: 1px solid rgba(29, 155, 240, 0.4);
+      background-color: #ffffff;
+      font-size: 11px;
+      padding: 2px 8px;
+      color: #0f1419;
+      outline: none;
+      max-width: 90px;
+    }
+
+    .calendar-select:focus {
+      border-color: var(--twitter-blue);
+      box-shadow: 0 0 0 1px rgba(29, 155, 240, 0.3);
+    }
+
+    .calendar-nav-btn {
+      border-radius: 999px;
+      border: 1px solid rgba(29, 155, 240, 0.4);
+      background-color: #ffffff;
+      color: #536471;
+      width: 24px;
+      height: 24px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      cursor: pointer;
+      padding: 0;
+      transition: background-color 0.15s ease, border-color 0.15s ease;
+    }
+
+    .calendar-nav-btn:hover {
+      background-color: rgba(29, 155, 240, 0.06);
+      border-color: var(--twitter-blue);
+    }
+
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 4px;
+      font-size: 12px;
+      user-select: none;
+      margin-top: 4px;
+    }
+
+    .calendar-weekday {
+      text-align: center;
+      color: #536471;
+      padding: 6px 0;
+      font-weight: 500;
+    }
+
+    .calendar-day {
+      text-align: center;
+      padding: 10px 0;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 13px;
+      color: #0f1419;
+      background-color: #ffffff;
+      border: 1px solid rgba(225, 232, 237, 0.9);
+      box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.7);
+      transition: background-color 0.12s ease, border-color 0.12s ease,
+        box-shadow 0.12s ease, transform 0.06s ease;
+    }
+
+    .calendar-day:hover {
+      background-color: rgba(29, 155, 240, 0.06);
+      border-color: rgba(29, 155, 240, 0.5);
+      box-shadow: 0 0 0 1px rgba(29, 155, 240, 0.2);
+      transform: translateY(-1px);
+    }
+
+    .calendar-day--empty {
+      cursor: default;
+      background-color: transparent;
+      border: none;
+      box-shadow: none;
+    }
+
+    .calendar-day--disabled {
+      color: #c0c6cc;
+      cursor: default;
+      opacity: 0.6;
+      background-color: #f5f5f5;
+      border-style: dashed;
+    }
+
+    .calendar-day--disabled:hover {
+      transform: none;
+      border-color: rgba(225, 232, 237, 0.9);
+      box-shadow: none;
+      background-color: #f5f5f5;
+    }
+
+    .calendar-day--selected {
+      background-color: var(--twitter-blue);
+      color: #ffffff;
+      font-weight: 600;
+      border-color: var(--twitter-blue-dark);
+      box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.9),
+        0 0 0 3px rgba(29, 155, 240, 0.3);
+      transform: translateY(0);
+    }
+
+    .calendar-day--today:not(.calendar-day--selected) {
+      border-color: rgba(29, 155, 240, 0.8);
+      box-shadow: 0 0 0 1px rgba(29, 155, 240, 0.4);
+      font-weight: 600;
+    }
+
+    @media (max-width: 480px) {
+      .app {
+        padding: 18px 16px 16px;
+        border-radius: 0.75rem;
+      }
+      .title {
+        font-size: 16px;
+      }
+      .subtitle {
+        font-size: 11px;
+      }
+      .actions {
+        flex-direction: column;
+        align-items: stretch;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app" id="app">
+    <header class="header">
+      <div class="logo-circle">𝕏</div>
+      <div class="title-group">
+        <div class="title">クエリビルダー</div>
+        <div class="subtitle">自分の過去ツイートを日付でさっと検索</div>
+      </div>
+    </header>
+
+    <section class="section" id="account-section">
+      <div class="section-title">
+        アカウント
+        <span class="section-title-badge">必須</span>
+      </div>
+      <div class="input-row">
+        <span class="account-prefix">@</span>
+        <input
+          type="text"
+          id="account-input"
+          placeholder="example"
+          autocomplete="off"
+        />
+        <button
+          type="button"
+          class="btn btn-secondary account-confirm-btn"
+          id="account-apply-button"
+        >
+          決定
+        </button>
+      </div>
+      <div class="error" id="account-error" style="display: none">
+        ユーザー名を入力してください。
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-title">
+        ワード検索
+        <span class="section-title-badge">全期間</span>
+      </div>
+      <div class="word-search-row">
+        <input
+          type="text"
+          id="word-input"
+          class="word-search-input"
+          placeholder="キーワードで自分のツイートを検索"
+          autocomplete="off"
+        />
+        <button class="btn btn-secondary" type="button" id="word-search-button">
+          検索
+        </button>
+      </div>
+      <div class="error" id="word-error" style="display: none">
+        アカウントとキーワードを入力してください。
+      </div>
+      <div class="rt-filter-row">
+        <input type="checkbox" id="exclude-rt-checkbox" />
+        <label for="exclude-rt-checkbox">リツイートを除外する</label>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-title">
+        日付を選択
+        <span class="section-title-badge">1日分のツイート</span>
+      </div>
+      <!-- 実際の値保持用。UI は下のカレンダーで操作 -->
+      <input type="date" id="date-input" style="position: absolute; left: -9999px" />
+      <div class="calendar-wrapper" id="calendar"></div>
+      <div class="error" id="date-error" style="display: none">
+        日付を選択してください。
+      </div>
+    </section>
+  </div>
+
+  <script>
+    (function () {
+      /**
+       * 指定日付文字列 (YYYY-MM-DD) の翌日を YYYY-MM-DD で返す
+       */
+      function getNextDateString(dateStr) {
+        const [y, m, d] = dateStr.split("-").map(Number);
+        const date = new Date(Date.UTC(y, m - 1, d));
+        date.setUTCDate(date.getUTCDate() + 1);
+        const ny = date.getUTCFullYear();
+        const nm = String(date.getUTCMonth() + 1).padStart(2, "0");
+        const nd = String(date.getUTCDate()).padStart(2, "0");
+        return ny + "-" + nm + "-" + nd;
+      }
+
+      /**
+       * URL のクエリストリングから account パラメータを取得
+       */
+      function getAccountFromQuery() {
+        const params = new URLSearchParams(window.location.search);
+        const account = params.get("account") || params.get("user") || "";
+        return account.replace(/^@/, "").trim();
+      }
+
+      /**
+       * account をクエリストリングに反映（history API で書き換え）
+       */
+      function applyAccountToUrl(account) {
+        const url = new URL(window.location.href);
+        if (account) {
+          url.searchParams.set("account", account);
+        } else {
+          url.searchParams.delete("account");
+        }
+        window.history.replaceState(null, "", url.toString());
+      }
+
+      /**
+       * エラー表示の制御
+       */
+      function showError(id, show) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        el.style.display = show ? "block" : "none";
+      }
+
+      function hideAllErrors() {
+        showError("account-error", false);
+        showError("date-error", false);
+        showError("word-error", false);
+      }
+
+      /**
+       * カレンダーUIの描画
+       */
+      function renderCalendar(year, month, selectedDateStr) {
+        var calendarEl = document.getElementById("calendar");
+        var dateInput = document.getElementById("date-input");
+        if (!calendarEl) return;
+
+        // month: 0-11
+        var firstDay = new Date(year, month, 1);
+        var startWeekday = firstDay.getDay(); // 0:日〜6:土
+        var daysInMonth = new Date(year, month + 1, 0).getDate();
+
+        var today = new Date();
+        var todayY = today.getFullYear();
+        var todayM = today.getMonth();
+        var todayD = today.getDate();
+
+        var html = "";
+        html += '<div class="calendar-header">';
+        html +=
+          '<button type="button" class="calendar-nav-btn" data-cal-nav="-1" aria-label="前の月">&lt;</button>';
+        html += '<div class="calendar-month-label">';
+
+        // 年セレクト（2006年〜今年）
+        var startYear = 2006;
+        html +=
+          '<select class="calendar-select" id="calendar-year-select">';
+        for (var yy = startYear; yy <= todayY; yy++) {
+          html +=
+            '<option value="' +
+            yy +
+            '"' +
+            (yy === year ? " selected" : "") +
+            ">" +
+            yy +
+            "年</option>";
+        }
+        html += "</select>";
+
+        // 月セレクト
+        html +=
+          '<select class="calendar-select" id="calendar-month-select">';
+        for (var mmIdx = 0; mmIdx < 12; mmIdx++) {
+          var label = mmIdx + 1 + "月";
+          html +=
+            '<option value="' +
+            (mmIdx + 1) +
+            '"' +
+            (mmIdx === month ? " selected" : "") +
+            ">" +
+            label +
+            "</option>";
+        }
+        html += "</select>";
+
+        html += "</div>"; // calendar-month-label
+        html +=
+          '<button type="button" class="calendar-nav-btn" data-cal-nav="1" aria-label="次の月">&gt;</button>';
+        html += "</div>";
+
+        html += '<div class="calendar-grid">';
+        var weekdays = ["日", "月", "火", "水", "木", "金", "土"];
+        for (var i = 0; i < 7; i++) {
+          html +=
+            '<div class="calendar-weekday">' + weekdays[i] + "</div>";
+        }
+
+        // 前に空白セル
+        for (var j = 0; j < startWeekday; j++) {
+          html +=
+            '<div class="calendar-day calendar-day--empty" data-day=""></div>';
+        }
+
+        var selectedY = null;
+        var selectedM = null;
+        var selectedD = null;
+        if (selectedDateStr) {
+          var parts = selectedDateStr.split("-");
+          if (parts.length === 3) {
+            selectedY = Number(parts[0]);
+            selectedM = Number(parts[1]) - 1;
+            selectedD = Number(parts[2]);
+          }
+        }
+
+        for (var day = 1; day <= daysInMonth; day++) {
+          var yyyy = year;
+          var mm = String(month + 1).padStart(2, "0");
+          var dd = String(day).padStart(2, "0");
+          var dateStr = yyyy + "-" + mm + "-" + dd;
+
+          var cls = "calendar-day";
+          var isToday =
+            year === todayY && month === todayM && day === todayD;
+          var isSelected =
+            year === selectedY && month === selectedM && day === selectedD;
+
+          // 未来日判定（今日より後は無効）
+          var thisDate = new Date(yyyy, month, day);
+          var todayDate = new Date(todayY, todayM, todayD);
+          var isFuture = thisDate.getTime() > todayDate.getTime();
+
+          if (isToday) cls += " calendar-day--today";
+          if (isSelected) cls += " calendar-day--selected";
+          if (isFuture) cls += " calendar-day--disabled";
+
+          html +=
+            '<div class="' +
+            cls +
+            '" data-day="' +
+            (isFuture ? "" : dateStr) +
+            '">' +
+            day +
+            "</div>";
+        }
+
+        html += "</div>"; // calendar-grid
+
+        calendarEl.innerHTML = html;
+
+        // イベント付与
+        var yearSelect = calendarEl.querySelector("#calendar-year-select");
+        var monthSelect = calendarEl.querySelector("#calendar-month-select");
+        if (yearSelect && monthSelect) {
+          yearSelect.addEventListener("change", function () {
+            var newYear = Number(yearSelect.value);
+            var newMonth = Number(monthSelect.value) - 1;
+            renderCalendar(newYear, newMonth, dateInput.value);
+          });
+          monthSelect.addEventListener("change", function () {
+            var newYear = Number(yearSelect.value);
+            var newMonth = Number(monthSelect.value) - 1;
+            renderCalendar(newYear, newMonth, dateInput.value);
+          });
+        }
+
+        var navButtons = calendarEl.querySelectorAll(
+          ".calendar-nav-btn"
+        );
+        navButtons.forEach(function (btn) {
+          btn.addEventListener("click", function () {
+            var delta = Number(btn.getAttribute("data-cal-nav"));
+            var newMonth = month + delta;
+            var newYear = year;
+            if (newMonth < 0) {
+              newMonth = 11;
+              newYear--;
+            } else if (newMonth > 11) {
+              newMonth = 0;
+              newYear++;
+            }
+            // dateInput.value は維持しつつ表示月だけ変更
+            renderCalendar(newYear, newMonth, dateInput.value);
+          });
+        });
+
+        var dayCells = calendarEl.querySelectorAll(".calendar-day");
+        dayCells.forEach(function (cell) {
+          var d = cell.getAttribute("data-day");
+          if (!d) return;
+          cell.addEventListener("click", function () {
+            dateInput.value = d;
+            showError("date-error", false);
+            // 再描画して選択表示
+            renderCalendar(year, month, d);
+            // 日付が選ばれたら即 X 検索を開く
+            openDateSearchOnX(d);
+          });
+        });
+      }
+
+      /**
+       * 日付指定の X (Twitter) 検索ページを開く（1日分）
+       */
+      function openDateSearchOnX(date) {
+        var accountInput = document.getElementById("account-input");
+        var wordInput = document.getElementById("word-input");
+        var excludeRtCheckbox = document.getElementById("exclude-rt-checkbox");
+        var account = (accountInput.value || "").trim();
+        var word = (wordInput && wordInput.value) ? wordInput.value.trim() : "";
+
+        var hasError = false;
+
+        if (!account) {
+          showError("account-error", true);
+          hasError = true;
+        } else {
+          showError("account-error", false);
+        }
+
+        if (!date) {
+          showError("date-error", true);
+          hasError = true;
+        } else {
+          showError("date-error", false);
+        }
+
+        if (hasError) {
+          return;
+        }
+
+        // 先頭 @ 除去
+        account = account.replace(/^@/, "").trim();
+        if (!account) {
+          showError("account-error", true);
+          return;
+        }
+
+        var nextDate = getNextDateString(date);
+        var rawQuery =
+          "from:" + account + " since:" + date + " until:" + nextDate;
+
+        // キーワードがあれば付与（ハッシュタグ含めそのまま）
+        if (word) {
+          rawQuery += " " + word;
+        }
+
+        // RT の扱い：デフォルトは含める
+        if (excludeRtCheckbox && excludeRtCheckbox.checked) {
+          // 明示的に RT を除外
+          rawQuery += " -is:retweet";
+        } else {
+          // ブラウザ検索では RT が除外されがちなので、含めることを明示
+          rawQuery += " include:nativeretweets";
+        }
+
+        var url =
+          "https://x.com/search?q=" +
+          encodeURIComponent(rawQuery) +
+          "&src=typed_query&f=live";
+
+        window.open(url, "_blank", "noopener,noreferrer");
+      }
+
+      /**
+       * ワード検索（全期間）
+       */
+      function openWordSearchOnX() {
+        var accountInput = document.getElementById("account-input");
+        var wordInput = document.getElementById("word-input");
+        var excludeRtCheckbox = document.getElementById("exclude-rt-checkbox");
+
+        var account = (accountInput.value || "").trim();
+        var word = (wordInput.value || "").trim();
+
+        var hasError = false;
+
+        if (!account) {
+          showError("account-error", true);
+          hasError = true;
+        } else {
+          showError("account-error", false);
+        }
+
+        if (!word) {
+          showError("word-error", true);
+          hasError = true;
+        } else {
+          showError("word-error", false);
+        }
+
+        if (hasError) {
+          return;
+        }
+
+        // 先頭 @ 除去
+        account = account.replace(/^@/, "").trim();
+        if (!account) {
+          showError("account-error", true);
+          return;
+        }
+
+        // from:account とキーワードを組み合わせ（全期間）
+        var rawQuery = "from:" + account + " " + word;
+
+        // RT の扱い：デフォルトは含める
+        if (excludeRtCheckbox && excludeRtCheckbox.checked) {
+          // 明示的に RT を除外
+          rawQuery += " -is:retweet";
+        } else {
+          // RT も含めて検索
+          rawQuery += " include:nativeretweets";
+        }
+
+        var url =
+          "https://x.com/search?q=" +
+          encodeURIComponent(rawQuery) +
+          "&src=typed_query&f=live";
+
+        window.open(url, "_blank", "noopener,noreferrer");
+      }
+
+      /**
+       * 初期化
+       */
+      function init() {
+        var accountInput = document.getElementById("account-input");
+        var accountSection = document.getElementById("account-section");
+        var dateInput = document.getElementById("date-input");
+        var accountApplyButton =
+          document.getElementById("account-apply-button");
+        var wordInput = document.getElementById("word-input");
+        var wordSearchButton =
+          document.getElementById("word-search-button");
+        var excludeRtCheckbox =
+          document.getElementById("exclude-rt-checkbox");
+
+        // クエリストリングから account を反映
+        var accountFromQuery = getAccountFromQuery();
+        if (accountFromQuery) {
+          accountInput.value = accountFromQuery;
+          // 自分専用利用を想定して、アカウント欄を少し控えめ表示（でも編集はできる）
+          accountSection.style.opacity = "0.85";
+        }
+
+        // 起動時は常に「RTを除外」はオフにする（デフォルトはRT含む）
+        if (excludeRtCheckbox) {
+          excludeRtCheckbox.checked = false;
+        }
+
+        // デフォルトの日付を今日にしておく（任意）
+        var today = new Date();
+        var yyyy = today.getFullYear();
+        var mm = String(today.getMonth() + 1).padStart(2, "0");
+        var dd = String(today.getDate()).padStart(2, "0");
+        dateInput.value = yyyy + "-" + mm + "-" + dd;
+
+        // カレンダー初期表示（今日の年月）
+        renderCalendar(today.getFullYear(), today.getMonth(), dateInput.value);
+
+        accountInput.addEventListener("input", function () {
+          showError("account-error", false);
+        });
+
+        accountInput.addEventListener("blur", function () {
+          var account = (accountInput.value || "").replace(/^@/, "").trim();
+          if (accountInput.value !== account) {
+            accountInput.value = account;
+          }
+        });
+
+        if (accountApplyButton) {
+          accountApplyButton.addEventListener("click", function () {
+            var account = (accountInput.value || "")
+              .replace(/^@/, "")
+              .trim();
+            if (!account) {
+              showError("account-error", true);
+              return;
+            }
+            showError("account-error", false);
+            accountInput.value = account;
+            applyAccountToUrl(account);
+          });
+        }
+
+        if (wordSearchButton) {
+          wordSearchButton.addEventListener("click", function () {
+            openWordSearchOnX();
+          });
+        }
+
+        if (wordInput) {
+          wordInput.addEventListener("keydown", function (e) {
+            if (e.key === "Enter") {
+              openWordSearchOnX();
+            }
+          });
+        }
+      }
+
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", init);
+      } else {
+        init();
+      }
+    })();
+  </script>
+</body>
+</html>
+
