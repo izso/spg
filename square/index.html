@@ -272,6 +272,11 @@
             animation: cellClear 0.35s ease-out forwards;
         }
 
+        .cell.fever-flash {
+            animation: feverFlash 0.9s ease-in-out 0s 3 alternate;
+            box-shadow: 0 0 14px rgba(241, 196, 15, 0.9);
+        }
+
         @keyframes cellClear {
             0% {
                 transform: scale(1);
@@ -287,6 +292,21 @@
                 transform: scale(0.3);
                 opacity: 0;
                 filter: brightness(2);
+            }
+        }
+
+        @keyframes feverFlash {
+            0% {
+                transform: scale(1);
+                filter: brightness(1);
+            }
+            50% {
+                transform: scale(1.1);
+                filter: brightness(1.6);
+            }
+            100% {
+                transform: scale(1);
+                filter: brightness(1.1);
             }
         }
 
@@ -411,12 +431,21 @@
             cursor: pointer;
             font-weight: bold;
             transition: all 0.3s;
+            margin: 4px 6px;
         }
 
         .game-over-box .btn-reset:hover {
             background: #764ba2;
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .mode-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 0.5em;
         }
     </style>
 </head>
@@ -425,8 +454,10 @@
         <div class="game-over-box">
             <h2>モード選択</h2>
             <p>遊び方を選んでください。</p>
-            <button class="btn-reset" onclick="selectMode('100')">100マスモード</button>
-            <button class="btn-reset" onclick="selectMode('infinite')" style="margin-left: 12px;">無限モード</button>
+            <div class="mode-buttons">
+                <button class="btn-reset" onclick="selectMode('100')">100マスモード</button>
+                <button class="btn-reset" onclick="selectMode('infinite')">無限モード</button>
+            </div>
         </div>
     </div>
     <div id="gameOverPopup" class="game-over-overlay">
@@ -460,7 +491,7 @@
                         <li>固定マスをクリックすると、そのマスを含む同じ色の最大の正方形が消える</li>
                         <li>得点＝（消した正方形内の数字の合計）×（消したマス数）</li>
                         <li>数字のないブロックを消しても得点は入らない</li>
-                        <li>白いマスが0個になるとゲームオーバー</li>
+                        <li>白いマスが0個になってもゲームは続行</li>
                         <li>100マスモードでは、固定マスを100個消すとクリア</li>
                     </ul>
                     <ul id="rulesEn" role="tabpanel" aria-labelledby="rulesTabEn" style="display:none;">
@@ -470,7 +501,7 @@
                         <li>Clicking a fixed cell removes the largest same-colored square that includes that fixed cell.</li>
                         <li>Score = (sum of numbers in the removed square) × (number of cells in the square).</li>
                         <li>You get no score if the removed square contains no numbers.</li>
-                        <li>When there are no white cells left, the game is over.</li>
+                        <li>The game continues even when there are no white cells left.</li>
                         <li>In 100-cell mode, clearing 100 fixed cells in total counts as a clear.</li>
                     </ul>
                 </div>
@@ -794,11 +825,11 @@
             return count;
         }
 
-        // ゲームオーバー判定（白いマスが0なら表示してリセット）
+        // ゲームオーバー判定
+        // 以前は「白いマスが0ならゲームオーバー」だったが、白マスがなくなっても継続できるようにするため
+        // いまは何もしない（将来別条件でゲームオーバーを導入したくなったらここで判定する）。
         function checkGameOver() {
-            if (countWhiteCells() === 0) {
-                showGameOver();
-            }
+            return;
         }
 
         // ゲームオーバー表示（ポップアップを表示し、リセットはボタンで行う）
@@ -830,18 +861,44 @@
         // 生成時に「この位置でその色の正方形が成立可能か（別色の固定マスが混ざらないか）」を判定して色を選ぶ。
 
         function activateBonusTime() {
-            // 盤面上の「すべての固定マス」を赤9に変換
+            const flashingCells = [];
             for (let i = 0; i < GRID_SIZE; i++) {
                 for (let j = 0; j < GRID_SIZE; j++) {
                     if (grid[i][j].locked) {
-                        grid[i][j].color = 1;   // red
-                        grid[i][j].number = 9;  // 9点
-                        updateCellDisplay(i, j);
+                        const el = document.querySelector(`[data-row="${i}"][data-col="${j}"]`);
+                        if (el) {
+                            el.classList.add('fever-flash');
+                            flashingCells.push({ row: i, col: j, el });
+                        }
                     }
                 }
             }
-            // 「ボーナスタイム」は継続せず、この変換を行った時点で終了（以後の固定マス生成は通常通り）
-            addLogLine('ボーナス発動：固定マスを赤9に変換');
+
+            addLogLine('9フィーバー！固定マスが赤9になります');
+
+            // 点滅演出が終わってから、すべて赤9に変換し、そのあとで非赤固定マスを3つ追加
+            setTimeout(() => {
+                flashingCells.forEach(({ row, col, el }) => {
+                    if (el) el.classList.remove('fever-flash');
+                    grid[row][col].color = 1;   // red
+                    grid[row][col].number = 9;  // 9点
+                    updateCellDisplay(row, col);
+                });
+
+                // 次のフィーバーが簡単になりすぎないよう、赤以外の固定マスを3つ追加
+                addExtraNonRedFixedCells(3);
+            }, 900 * 3 + 80); // アニメーション 0.9s × 3回 + 余裕
+        }
+
+        // 赤以外の固定マスを count 個追加（可能な範囲で）
+        function addExtraNonRedFixedCells(count) {
+            for (let k = 0; k < count; k++) {
+                if (countNonFixedCells() === 0) break;
+                createFixedCell([2, 3]); // blue / yellow のみ許可
+            }
+            if (count > 0) {
+                addLogLine('フィーバー後に青・黄の固定マスを追加');
+            }
         }
 
         // (row,col) を固定マス（locked）かつ candidateColor とみなしたとき、
@@ -894,7 +951,11 @@
             return true;
         }
 
-        function createFixedCell() {
+        // allowedColors を指定できる固定マス生成（省略時は [1,2,3]）
+        function createFixedCell(allowedColors) {
+            const usableColors = Array.isArray(allowedColors) && allowedColors.length > 0
+                ? allowedColors
+                : [1, 2, 3];
             // 固定マス以外（変化させられるマス）を候補にする
             const candidateCells = [];
             for (let i = 0; i < GRID_SIZE; i++) {
@@ -912,7 +973,8 @@
             // 「置いた瞬間に“消せない固定マス”が確定」しないよう、位置ごとに置ける色を判定する
             const viable = [];
             for (const cell of candidateCells) {
-                const validColors = getValidFixedColorsForCell(cell.row, cell.col);
+                const validColors = getValidFixedColorsForCell(cell.row, cell.col)
+                    .filter(color => usableColors.includes(color));
                 if (validColors.length > 0) {
                     viable.push({ cell, validColors });
                 }
@@ -921,7 +983,7 @@
             // 可能な候補があるならそこから選ぶ（ない場合は従来通りランダムに置く）
             const chosen = viable.length > 0
                 ? viable[Math.floor(Math.random() * viable.length)]
-                : { cell: candidateCells[Math.floor(Math.random() * candidateCells.length)], validColors: [1, 2, 3] };
+                : { cell: candidateCells[Math.floor(Math.random() * candidateCells.length)], validColors: usableColors };
 
             const randomCell = chosen.cell;
             // 固定マスは必ず赤、青、黄色のいずれか（1: red, 2: blue, 3: yellow）
