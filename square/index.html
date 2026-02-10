@@ -103,9 +103,12 @@
             width: 100%;
             max-width: 600px;
             flex-shrink: 0;
+            height: 100vh;
             max-height: 100vh;
             display: flex;
             flex-direction: column;
+            overflow: hidden;
+            min-height: 0;
         }
 
         h1 {
@@ -136,20 +139,37 @@
             flex: 1;
             min-height: 0;
             margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            container-type: size;
         }
 
         .grid {
             display: grid;
             grid-template-columns: repeat(6, 1fr);
+            grid-template-rows: repeat(6, 1fr);
             gap: 2px;
             background: #ddd;
             padding: 2px;
             border-radius: 10px;
+            width: 100%;
             height: 100%;
+            max-width: 100%;
+            max-height: 100%;
+            min-width: 0;
+            min-height: 0;
+        }
+
+        @supports (container-type: size) {
+            .grid {
+                width: min(100cqw, 100cqh);
+                height: min(100cqw, 100cqh);
+            }
         }
 
         .cell {
-            aspect-ratio: 1;
             background: white;
             border: none;
             cursor: pointer;
@@ -347,7 +367,7 @@
                 <h2>ルール</h2>
                 <ul>
                     <li>マスをクリックで色が変わる（白→赤→青→黄→赤）</li>
-                    <li>10秒ごとに白マス数に応じて固定マスが出現（12個以下→1個、24個以下→2個、36個以下→3個）</li>
+                    <li>10秒ごとに固定マスが1〜3個追加される（非固定36-25個→3個追加、24-13個→2個追加、12-0個→1個追加）</li>
                     <li>固定マスの色で数字の範囲：赤1〜3、青4〜6、黄7〜9</li>
                     <li>固定マスをクリックすると、そのマスを含む同じ色の最大の正方形が消える</li>
                     <li>得点＝（消した正方形内の数字の合計）×（消したマス数）</li>
@@ -487,7 +507,6 @@
                         document.getElementById('score').textContent = score;
                         showMessage(`+${totalPoints}点！`);
                     }
-                    ensureFixedCells();
                     return;
                 }
 
@@ -567,18 +586,24 @@
             return count;
         }
 
-        // 白マス数に応じた固定マスの目標数（12個以下→1、24個以下→2、36個以下→3）
-        function getTargetFixedCount() {
-            const white = countWhiteCells();
-            if (white <= 12) return 1;
-            if (white <= 24) return 2;
-            return 3;
+        // 非固定マス（固定マス以外＝白・赤・青・黄の変化可能マス）の数
+        function countNonFixedCells() {
+            return GRID_SIZE * GRID_SIZE - countFixedCells();
         }
 
-        // 固定マスを目標数まで補充
-        function ensureFixedCells() {
-            const target = getTargetFixedCount();
-            while (countFixedCells() < target) {
+        // 今回追加する固定マス数（1〜3。非固定マス数に応じる。0にはならない）
+        // 非固定36-25個→3個追加、24-13個→2個追加、12-0個→1個追加
+        function getFixedCellsToAdd() {
+            const nonFixed = countNonFixedCells();
+            if (nonFixed >= 25) return 3;
+            if (nonFixed >= 13) return 2;
+            return 1;
+        }
+
+        // カウントダウン0のとき呼ぶ：必ず1〜3個の固定マスを追加する
+        function addFixedCellsOnTimer() {
+            const toAdd = getFixedCellsToAdd();
+            for (let i = 0; i < toAdd && countNonFixedCells() > 0; i++) {
                 createFixedCell();
             }
         }
@@ -612,9 +637,9 @@
             fixedCellInterval = null;
         }
 
-        // 固定マスを生成
+        // 固定マスを生成（今ある固定マス以外のすべてのマス＝白・赤・青・黄が対象）
         function createFixedCell() {
-            // 固定ブロック以外のマスを探す
+            // 固定マス以外（変化させられるマス）を候補にする
             const candidateCells = [];
             for (let i = 0; i < GRID_SIZE; i++) {
                 for (let j = 0; j < GRID_SIZE; j++) {
@@ -646,7 +671,7 @@
             checkGameOver();
         }
 
-        // タイマーの開始
+        // タイマーの開始（カウントダウン0で1回だけ固定マス追加。setIntervalは使わず1秒刻みのタイマーのみ）
         function startTimer() {
             timer = FIXED_INTERVAL / 1000;
             document.getElementById('timer').textContent = timer;
@@ -657,19 +682,16 @@
             if (fixedCellInterval) {
                 clearInterval(fixedCellInterval);
             }
+            fixedCellInterval = null;
 
             timerInterval = setInterval(() => {
                 timer--;
                 document.getElementById('timer').textContent = timer;
                 if (timer <= 0) {
                     timer = FIXED_INTERVAL / 1000;
-                    ensureFixedCells();
+                    addFixedCellsOnTimer(); // ここだけで1回だけ1〜3個追加
                 }
             }, 1000);
-
-            fixedCellInterval = setInterval(() => {
-                ensureFixedCells();
-            }, FIXED_INTERVAL);
         }
 
         // メッセージ表示
@@ -687,14 +709,14 @@
             score = 0;
             document.getElementById('score').textContent = score;
             initGrid();
-            ensureFixedCells();
+            addFixedCellsOnTimer();
             startTimer();
             showMessage('ゲームをリセットしました');
         }
 
         // 初期化
         initGrid();
-        ensureFixedCells();
+        addFixedCellsOnTimer();
         startTimer();
     </script>
 </body>
