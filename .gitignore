@@ -1,0 +1,10 @@
+# 環境変数（秘密情報を含む）
+.env
+.env.*
+!.env.example
+
+# CSV データ
+*.csv
+
+# wip
+wip/
