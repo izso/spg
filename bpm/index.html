@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BPM</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --border: #999;
+            --border-light: #ccc;
+            --border-muted: #d8d8d8;
+            --blue: #4285f4;
+            --blue-hover: #3367d6;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #fff;
+            min-height: 100dvh;
+            color: #222;
+            -webkit-text-size-adjust: 100%;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+            padding-bottom: env(safe-area-inset-bottom, 0);
+        }
+
+        .header {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background: #fff;
+            padding: 14px 16px;
+            padding-top: calc(14px + env(safe-area-inset-top, 0));
+            text-align: center;
+            font-size: 17px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            border-bottom: 2px solid var(--border-muted);
+        }
+
+        .section {
+            padding: 16px;
+            border-bottom: 2px solid var(--border-muted);
+        }
+
+        .section:last-child { border-bottom: none; }
+
+        .file-drop {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 72px;
+            border: 2px dashed var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .file-drop:hover, .file-drop.dragover { border-color: #555; }
+        .file-drop.has-file { border-style: solid; }
+
+        .file-drop input {
+            position: absolute;
+            width: 0; height: 0;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .file-drop-inner {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            padding: 16px;
+            pointer-events: none;
+        }
+
+        .file-hint { font-size: 28px; color: #bbb; line-height: 1; }
+        .file-drop.has-file .file-hint { font-size: 20px; }
+        .file-ext { font-size: 13px; color: #999; font-weight: 600; }
+        .file-drop.has-file .file-ext { display: none; }
+        .file-name { font-size: 13px; color: #444; font-weight: 600; word-break: break-all; }
+        .file-name:empty { display: none; }
+
+        .player-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .btn {
+            border: 2px solid transparent;
+            border-radius: 8px;
+            padding: 10px 16px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            line-height: 1;
+            background: #fff;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .btn:active { transform: scale(0.97); }
+        .btn:disabled { opacity: 0.3; cursor: not-allowed; transform: none; }
+
+        .btn-fill {
+            background: var(--blue);
+            border-color: var(--blue);
+            color: #fff;
+        }
+
+        .btn-fill:hover:not(:disabled) {
+            background: var(--blue-hover);
+            border-color: var(--blue-hover);
+        }
+
+        .btn-icon {
+            min-width: 48px;
+            min-height: 48px;
+        }
+
+        .btn-ghost {
+            border-color: var(--border);
+            color: #555;
+            min-width: 48px;
+            min-height: 48px;
+        }
+
+        .btn-ghost:hover:not(:disabled) {
+            background: #f0f0f0;
+            border-color: #666;
+            color: #222;
+        }
+
+        .btn-step {
+            border-color: var(--border);
+            color: #222;
+            min-width: 48px;
+            min-height: 48px;
+        }
+
+        .btn-step:hover:not(:disabled) {
+            background: #f0f0f0;
+            border-color: #666;
+        }
+
+        .btn-tap {
+            width: 100%;
+            padding: 20px;
+            font-size: 20px;
+            min-height: 72px;
+            margin-bottom: 10px;
+        }
+
+        .btn-ok {
+            width: 100%;
+            padding: 14px;
+            min-height: 48px;
+        }
+
+        .time-display {
+            font-size: 12px;
+            color: #888;
+            font-variant-numeric: tabular-nums;
+            margin-left: auto;
+        }
+
+        .seek-bar {
+            width: 100%;
+            height: 6px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: #ccc;
+            border-radius: 3px;
+            border: 1px solid var(--border-light);
+            cursor: pointer;
+        }
+
+        .seek-bar::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px; height: 20px;
+            border-radius: 50%;
+            background: var(--blue);
+            cursor: pointer;
+        }
+
+        .tap-stats {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .stat-box, .tap-list, .result-panel {
+            border: 2px solid var(--border-light);
+            border-radius: 8px;
+        }
+
+        .stat-box {
+            flex: 1;
+            padding: 8px 10px;
+            text-align: center;
+        }
+
+        .stat-box .value {
+            font-size: 20px;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .stat-box .label {
+            font-size: 10px;
+            color: #aaa;
+            margin-top: 2px;
+            text-transform: uppercase;
+        }
+
+        .tap-list {
+            width: 100%;
+            min-height: 32px;
+            max-height: 48px;
+            overflow-y: auto;
+            font-size: 11px;
+            color: #aaa;
+            font-variant-numeric: tabular-nums;
+            padding: 6px 10px;
+            line-height: 1.6;
+        }
+
+        .result-panel {
+            display: none;
+            padding: 12px 14px;
+            margin-top: 10px;
+        }
+
+        .result-panel.visible { display: block; }
+
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            padding: 6px 0;
+        }
+
+        .result-item + .result-item {
+            border-top: 2px solid var(--border-muted);
+            padding-top: 10px;
+            margin-top: 4px;
+        }
+
+        .result-item .name { font-size: 12px; color: #888; font-weight: 600; }
+        .result-item .value { font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; }
+        .result-item .unit { font-size: 12px; color: #999; }
+
+        .offset-adjuster {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .offset-display {
+            min-width: 72px;
+            text-align: center;
+            font-size: 20px;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .tap-flash {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.04);
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.08s;
+        }
+
+        .tap-flash.active { opacity: 1; }
+
+        .error-msg {
+            color: #dc2626;
+            font-size: 12px;
+            margin-top: 6px;
+            display: none;
+            text-align: center;
+        }
+
+        .error-msg.visible { display: block; }
+
+        @media (min-width: 601px) {
+            .section { padding: 16px 24px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="tap-flash" id="tapFlash"></div>
+
+    <div class="container">
+        <div class="header">BPM</div>
+
+        <div class="section">
+            <div class="file-drop" id="fileDrop">
+                <input type="file" id="fileInput" accept=".ogg,audio/ogg">
+                <div class="file-drop-inner">
+                    <span class="file-hint">↑</span>
+                    <span class="file-ext">.ogg</span>
+                    <span class="file-name" id="fileName"></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="player-controls">
+                <button class="btn btn-fill btn-icon" id="playBtn" disabled aria-label="再生">▶</button>
+                <button class="btn btn-ghost" id="clearTapsBtn" disabled aria-label="リセット">↺</button>
+                <span class="time-display" id="timeDisplay">0:00.000 / 0:00.000</span>
+            </div>
+            <input type="range" class="seek-bar" id="seekBar" min="0" max="1000" value="0" disabled>
+        </div>
+
+        <div class="section">
+            <button class="btn btn-fill btn-tap" id="tapBtn" disabled>Tap or Space</button>
+            <div class="tap-stats">
+                <div class="stat-box">
+                    <div class="value" id="tapCount">0</div>
+                    <div class="label">Tap</div>
+                </div>
+                <div class="stat-box">
+                    <div class="value" id="detectedBpm">—</div>
+                    <div class="label">BPM</div>
+                </div>
+            </div>
+            <div class="tap-list" id="tapList">—</div>
+        </div>
+
+        <div class="section">
+            <button class="btn btn-fill btn-ok" id="confirmBtn" disabled>OK</button>
+            <p class="error-msg" id="errorMsg"></p>
+            <div class="result-panel" id="resultPanel">
+                <div class="result-item">
+                    <span class="name">beat</span>
+                    <span><span class="value" id="resultBeatMs">—</span><span class="unit"> ms</span></span>
+                </div>
+                <div class="result-item">
+                    <span class="name">offset</span>
+                    <div class="offset-adjuster">
+                        <button class="btn btn-step" id="offsetDown" aria-label="1拍戻す">◀</button>
+                        <span class="offset-display" id="resultOffset">—</span>
+                        <button class="btn btn-step" id="offsetUp" aria-label="1拍進む">▶</button>
+                        <span class="unit">ms</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <audio id="audio" preload="auto"></audio>
+
+    <script>
+        const $ = id => document.getElementById(id);
+        const audio = $('audio');
+        const els = {
+            fileDrop: $('fileDrop'), fileInput: $('fileInput'), fileName: $('fileName'),
+            playBtn: $('playBtn'), seekBar: $('seekBar'), timeDisplay: $('timeDisplay'),
+            tapCount: $('tapCount'), detectedBpm: $('detectedBpm'), tapList: $('tapList'),
+            clearTapsBtn: $('clearTapsBtn'), tapBtn: $('tapBtn'), confirmBtn: $('confirmBtn'),
+            errorMsg: $('errorMsg'), resultPanel: $('resultPanel'),
+            resultBeatMs: $('resultBeatMs'), resultOffset: $('resultOffset'),
+            offsetDown: $('offsetDown'), offsetUp: $('offsetUp'), tapFlash: $('tapFlash'),
+        };
+
+        let taps = [];
+        let isSeeking = false;
+        let flashTimeout = null;
+        let currentBpm = null;
+        let currentOffset = 0;
+
+        const beatMs = () => currentBpm ? 60000 / currentBpm : 0;
+
+        function formatTime(sec) {
+            const m = Math.floor(sec / 60);
+            const s = sec % 60;
+            const whole = Math.floor(s);
+            const ms = Math.round((s - whole) * 1000);
+            return `${m}:${String(whole).padStart(2, '0')}.${String(ms).padStart(3, '0')}`;
+        }
+
+        function updateTime() {
+            const cur = audio.currentTime || 0;
+            const dur = audio.duration || 0;
+            els.timeDisplay.textContent = `${formatTime(cur)} / ${formatTime(dur)}`;
+            if (!isSeeking && dur > 0) els.seekBar.value = (cur / dur) * 1000;
+        }
+
+        function updatePlayState() {
+            const playing = audio.src && !audio.paused;
+            els.playBtn.textContent = playing ? '⏸' : '▶';
+            els.tapBtn.disabled = !playing;
+        }
+
+        function hideResult() {
+            els.resultPanel.classList.remove('visible');
+            els.errorMsg.classList.remove('visible');
+        }
+
+        function showError(msg) {
+            els.errorMsg.textContent = msg;
+            els.errorMsg.classList.add('visible');
+        }
+
+        function seekToOffset() {
+            if (!audio.src || !audio.duration) return;
+            isSeeking = true;
+            audio.currentTime = Math.min(currentOffset / 1000, audio.duration);
+            updateTime();
+            isSeeking = false;
+        }
+
+        function adjustOffset(beats) {
+            const ms = beatMs();
+            if (!ms) return;
+            currentOffset = Math.max(0, Math.round(currentOffset + beats * ms));
+            els.resultOffset.textContent = currentOffset;
+            seekToOffset();
+        }
+
+        function calcBpm(times) {
+            if (times.length < 2) return null;
+            const ivs = times.slice(1).map((t, i) => t - times[i]);
+            const sorted = [...ivs].sort((a, b) => a - b);
+            const med = sorted[Math.floor(sorted.length / 2)];
+            const ok = ivs.filter(v => Math.abs(v - med) / med < 0.25);
+            if (!ok.length) return null;
+            return 60000 / (ok.reduce((a, b) => a + b, 0) / ok.length);
+        }
+
+        function calcOffset(times, bpm) {
+            const ms = 60000 / bpm;
+            const limit = times[0] + ms;
+            let best = 0, err = Infinity;
+            for (let o = 0; o <= limit; o += 0.5) {
+                let e = 0;
+                for (const t of times) {
+                    const n = Math.round((t - o) / ms);
+                    e += Math.abs(t - (o + n * ms));
+                }
+                if (e < err) { err = e; best = o; }
+            }
+            return Math.round(best);
+        }
+
+        function updateTapUI() {
+            els.tapCount.textContent = taps.length;
+            const bpm = calcBpm(taps);
+            if (bpm) {
+                currentBpm = bpm;
+                els.detectedBpm.textContent = bpm.toFixed(2);
+                els.confirmBtn.disabled = false;
+            } else {
+                els.detectedBpm.textContent = '—';
+                if (!taps.length) {
+                    currentBpm = null;
+                    els.confirmBtn.disabled = true;
+                }
+            }
+            els.clearTapsBtn.disabled = !taps.length;
+            els.tapList.textContent = taps.length
+                ? taps.map((t, i) => `${i + 1}:${Math.round(t)}`).join(' ')
+                : '—';
+        }
+
+        function addTap() {
+            if (!audio.src || audio.paused) return;
+            taps.push(audio.currentTime * 1000);
+            els.tapFlash.classList.add('active');
+            clearTimeout(flashTimeout);
+            flashTimeout = setTimeout(() => els.tapFlash.classList.remove('active'), 80);
+            updateTapUI();
+            hideResult();
+        }
+
+        function clearTaps() {
+            taps = [];
+            currentBpm = null;
+            updateTapUI();
+            hideResult();
+        }
+
+        function loadFile(file) {
+            if (!file?.name.toLowerCase().endsWith('.ogg')) {
+                showError('.ogg only');
+                return;
+            }
+            audio.src = URL.createObjectURL(file);
+            els.fileName.textContent = file.name;
+            els.fileDrop.classList.add('has-file');
+            els.playBtn.disabled = false;
+            els.seekBar.disabled = false;
+            clearTaps();
+            hideResult();
+        }
+
+        function confirm() {
+            if (!currentBpm) { showError('BPM?'); return; }
+            if (taps.length < 2) { showError('Tap ×2+'); return; }
+            currentOffset = calcOffset(taps, currentBpm);
+            els.resultBeatMs.textContent = beatMs().toFixed(3);
+            els.resultOffset.textContent = currentOffset;
+            seekToOffset();
+            els.resultPanel.classList.add('visible');
+            els.errorMsg.classList.remove('visible');
+        }
+
+        els.fileDrop.onclick = () => els.fileInput.click();
+        els.fileInput.onchange = () => els.fileInput.files[0] && loadFile(els.fileInput.files[0]);
+        els.fileDrop.ondragover = e => { e.preventDefault(); els.fileDrop.classList.add('dragover'); };
+        els.fileDrop.ondragleave = () => els.fileDrop.classList.remove('dragover');
+        els.fileDrop.ondrop = e => {
+            e.preventDefault();
+            els.fileDrop.classList.remove('dragover');
+            if (e.dataTransfer.files[0]) loadFile(e.dataTransfer.files[0]);
+        };
+
+        els.playBtn.onclick = () => audio.paused ? audio.play() : audio.pause();
+        els.tapBtn.onclick = addTap;
+        els.clearTapsBtn.onclick = clearTaps;
+        els.confirmBtn.onclick = confirm;
+        els.offsetDown.onclick = () => adjustOffset(-1);
+        els.offsetUp.onclick = () => adjustOffset(1);
+
+        els.seekBar.onmousedown = els.seekBar.ontouchstart = () => { isSeeking = true; };
+        els.seekBar.onmouseup = els.seekBar.ontouchend = () => { isSeeking = false; };
+        els.seekBar.oninput = () => {
+            if (audio.duration) {
+                audio.currentTime = (els.seekBar.value / 1000) * audio.duration;
+                updateTime();
+            }
+        };
+
+        audio.ontimeupdate = updateTime;
+        audio.onloadedmetadata = updateTime;
+        audio.onended = audio.onplay = audio.onpause = updatePlayState;
+
+        document.onkeydown = e => {
+            if (e.code === 'Space' && !e.repeat) {
+                e.preventDefault();
+                addTap();
+                return;
+            }
+            if (!els.resultPanel.classList.contains('visible')) return;
+            if (e.code === 'ArrowLeft') { e.preventDefault(); adjustOffset(-1); }
+            if (e.code === 'ArrowRight') { e.preventDefault(); adjustOffset(1); }
+        };
+    </script>
+</body>
+</html>
