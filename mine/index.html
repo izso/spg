@@ -1,0 +1,1291 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>マインスイーパー - Natural & Responsive</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+        }
+
+        :root {
+            --bg-gradient: linear-gradient(135deg, #f5f5f4 0%, #e7e5e4 100%);
+            --panel-bg: rgba(255, 255, 255, 0.85);
+            --border-color: rgba(0, 0, 0, 0.08);
+            --text-color: #292524;
+            --cell-size: 36px;
+        }
+
+        body {
+            font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: var(--bg-gradient);
+            color: var(--text-color);
+            min-height: 100vh;
+            min-height: 100dvh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 12px;
+            overflow-x: hidden;
+        }
+
+        .main {
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            width: 100%;
+            max-width: 1000px;
+            gap: 24px;
+            position: relative;
+        }
+
+        /* Container styling */
+        .container {
+            background: var(--panel-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.02);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 620px;
+            margin: auto;
+        }
+
+        h1 {
+            font-size: 1.6em;
+            margin-bottom: 12px;
+            background: linear-gradient(to right, #4f46e5, #7c3aed);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 800;
+            letter-spacing: 0.05em;
+            text-align: center;
+        }
+
+        /* Rules Panel (Drawer) */
+        .rules-panel {
+            position: fixed;
+            top: 0;
+            right: -340px;
+            width: 320px;
+            height: 100vh;
+            height: 100dvh;
+            background: #ffffff;
+            z-index: 200;
+            box-shadow: -10px 0 30px rgba(0, 0, 0, 0.1);
+            border-left: 1px solid rgba(0, 0, 0, 0.06);
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            transition: right 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            overflow-y: auto;
+            -webkit-user-select: auto;
+            user-select: auto;
+        }
+
+        .rules-panel.open {
+            right: 0;
+        }
+
+        .rules-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #6366f1;
+        }
+
+        .rules-header h2 {
+            font-size: 1.15em;
+            color: #1c1917;
+            font-weight: 700;
+        }
+
+        .close-rules-btn {
+            background: transparent;
+            border: none;
+            font-size: 1.8em;
+            line-height: 0.5;
+            cursor: pointer;
+            color: #78716c;
+            transition: color 0.2s;
+            padding: 4px;
+            outline: none;
+        }
+
+        .close-rules-btn:hover {
+            color: #ef4444;
+        }
+
+        .rules-tabs {
+            display: inline-flex;
+            gap: 4px;
+            margin-bottom: 16px;
+            border-radius: 999px;
+            background: rgba(99, 102, 241, 0.08);
+            padding: 3px;
+            border: 1px solid rgba(99, 102, 241, 0.15);
+        }
+
+        .rules-tab {
+            border: none;
+            background: transparent;
+            padding: 4px 12px;
+            border-radius: 999px;
+            font-size: 0.75em;
+            cursor: pointer;
+            color: #78716c;
+            font-weight: 600;
+            transition: all 0.2s;
+            outline: none;
+        }
+
+        .rules-tab.active {
+            background: #6366f1;
+            color: #ffffff;
+            box-shadow: 0 2px 6px rgba(99, 102, 241, 0.2);
+        }
+
+        .rules-panel ul {
+            list-style: none;
+            font-size: 0.82em;
+            line-height: 1.6;
+            color: #44403c;
+        }
+
+        .rules-panel li {
+            margin-bottom: 8px;
+            padding-left: 1.2em;
+            position: relative;
+        }
+
+        .rules-panel li::before {
+            content: "✦";
+            position: absolute;
+            left: 0;
+            color: #6366f1;
+        }
+
+        /* Drawer Overlay */
+        .drawer-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.25);
+            z-index: 199;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .drawer-overlay.show {
+            display: block;
+            opacity: 1;
+        }
+
+        /* Settings and Controls */
+        .settings {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 100%;
+            margin-bottom: 16px;
+            background: rgba(255, 255, 255, 0.6);
+            padding: 12px;
+            border-radius: 14px;
+            border: 1px solid rgba(0, 0, 0, 0.04);
+        }
+
+        .presets {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .btn {
+            background: rgba(99, 102, 241, 0.06);
+            color: #4f46e5;
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            padding: 5px 12px;
+            font-size: 0.8em;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-weight: 600;
+            outline: none;
+        }
+
+        .btn:hover {
+            background: #6366f1;
+            color: white;
+            border-color: #6366f1;
+            box-shadow: 0 2px 8px rgba(99, 102, 241, 0.25);
+        }
+
+        .btn:active {
+            transform: scale(0.97);
+        }
+
+        .btn.active {
+            background: #6366f1;
+            color: white;
+            border-color: #6366f1;
+            box-shadow: 0 2px 6px rgba(99, 102, 241, 0.2);
+        }
+
+        .custom-inputs {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .input-group {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .input-group label {
+            font-size: 0.75em;
+            color: #78716c;
+            font-weight: 600;
+        }
+
+        .input-group input {
+            background: #ffffff;
+            border: 1px solid #d6d3d1;
+            border-radius: 6px;
+            color: #1c1917;
+            padding: 3px 6px;
+            width: 44px;
+            text-align: center;
+            font-size: 0.85em;
+            outline: none;
+            transition: border-color 0.2s;
+            -webkit-user-select: auto;
+            user-select: auto;
+        }
+
+        .input-group input:focus {
+            border-color: #6366f1;
+            box-shadow: 0 0 4px rgba(99, 102, 241, 0.2);
+        }
+
+        /* Status Bar */
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            border-radius: 12px;
+            padding: 10px 18px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+        }
+
+        .status-display {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 64px;
+        }
+
+        .status-label {
+            font-size: 0.65em;
+            color: #78716c;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 1px;
+            font-weight: 700;
+        }
+
+        .status-value {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #d97706;
+            letter-spacing: 1px;
+        }
+
+        .face-btn {
+            background: #f5f5f4;
+            border: 1px solid #e7e5e4;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            font-size: 1.5em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+            outline: none;
+        }
+
+        .face-btn:hover {
+            background: #ffffff;
+            transform: scale(1.06);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .face-btn:active {
+            transform: scale(0.94);
+        }
+
+        /* Mobile Action Selector */
+        .mobile-mode-selector {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            margin-bottom: 12px;
+        }
+
+        .mode-btn {
+            flex: 1;
+            max-width: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 8px;
+            border-radius: 8px;
+            border: 1px solid #d6d3d1;
+            background: rgba(255, 255, 255, 0.6);
+            color: #57534e;
+            font-weight: 600;
+            font-size: 0.85em;
+            cursor: pointer;
+            transition: all 0.2s;
+            outline: none;
+        }
+
+        .mode-btn.active {
+            background: #6366f1;
+            color: white;
+            border-color: #6366f1;
+            box-shadow: 0 2px 8px rgba(99, 102, 241, 0.2);
+        }
+
+        /* Game Board Wrapper */
+        .grid-wrapper {
+            width: 100%;
+            max-width: 100%;
+            overflow: auto;
+            border-radius: 14px;
+            border: 1px solid rgba(0, 0, 0, 0.06);
+            background: rgba(255, 255, 255, 0.4);
+            padding: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            touch-action: none; /* Disables browser touch zoom and gestures */
+        }
+
+        .grid {
+            display: grid;
+            gap: 2.5px;
+            margin: auto;
+            touch-action: none;
+        }
+
+        /* Cell Styling - Softer natural aesthetics */
+        .cell {
+            width: var(--cell-size);
+            height: var(--cell-size);
+            border-radius: 4px;
+            font-size: 1.05em;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.15s, transform 0.08s, box-shadow 0.15s;
+            position: relative;
+            outline: none;
+            touch-action: manipulation;
+        }
+
+        /* Cozy warm gray button style */
+        .cell.unrevealed {
+            background: linear-gradient(135deg, #e7e5e4 0%, #d6d3d1 100%);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.4),
+                        0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .cell.unrevealed:hover {
+            filter: brightness(1.05);
+            transform: scale(1.03);
+            z-index: 2;
+        }
+
+        .cell.unrevealed:active {
+            transform: scale(0.95);
+        }
+
+        /* Flat inset revealed cell */
+        .cell.revealed {
+            background: #fafaf9;
+            border: 1.2px solid #e7e5e4;
+            box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.04);
+            cursor: default;
+        }
+
+        /* Safe soft color palette for numbers */
+        .cell.n-1 { color: #1d4ed8; } /* blue */
+        .cell.n-2 { color: #047857; } /* green */
+        .cell.n-3 { color: #b91c1c; } /* red */
+        .cell.n-4 { color: #6d28d9; } /* purple */
+        .cell.n-5 { color: #9a3412; } /* rust / brown */
+        .cell.n-6 { color: #0f766e; } /* teal */
+        .cell.n-7 { color: #1e293b; } /* dark gray */
+        .cell.n-8 { color: #78716c; } /* warm stone */
+
+        /* Flagged Cell */
+        .cell.flagged {
+            box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.3),
+                        0 0 6px rgba(239, 68, 68, 0.2);
+            background: linear-gradient(135deg, #e7e5e4 0%, #d6d3d1 100%);
+        }
+
+        .cell.flagged::after {
+            content: "🚩";
+            font-size: 0.9em;
+            animation: flagPop 0.18s cubic-bezier(0.175, 0.885, 0.32, 1.2);
+        }
+
+        @keyframes flagPop {
+            0% { transform: scale(0); }
+            100% { transform: scale(1); }
+        }
+
+        /* Mine Cell */
+        .cell.mine {
+            background: #fee2e2;
+            border-color: #fca5a5;
+            box-shadow: inset 1px 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .cell.mine::after {
+            content: "💣";
+            font-size: 0.9em;
+        }
+
+        .cell.exploded {
+            background: #fca5a5;
+            box-shadow: 0 0 15px rgba(239, 68, 68, 0.3);
+            animation: explodePulse 0.35s ease-out;
+            z-index: 3;
+        }
+
+        @keyframes explodePulse {
+            0% { transform: scale(1); filter: brightness(1.4); }
+            50% { transform: scale(1.15); }
+            100% { transform: scale(1); filter: brightness(1); }
+        }
+
+        .cell.wrong-flag::after {
+            content: "❌";
+            font-size: 0.7em;
+            position: absolute;
+            top: 1px;
+            right: 1px;
+        }
+
+        /* Shake animation on defeat */
+        .shake {
+            animation: boardShake 0.35s ease-out;
+        }
+
+        @keyframes boardShake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-4px); }
+            40%, 80% { transform: translateX(4px); }
+        }
+
+        /* Overlay modals */
+        .overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(41, 37, 36, 0.4);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            opacity: 0;
+            transition: opacity 0.25s ease;
+        }
+
+        .overlay.show {
+            display: flex;
+            opacity: 1;
+        }
+
+        .popup-box {
+            background: #ffffff;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            padding: 24px 30px;
+            border-radius: 16px;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            transform: scale(0.92);
+            transition: transform 0.25s ease;
+            max-width: 360px;
+            width: 90%;
+        }
+
+        .overlay.show .popup-box {
+            transform: scale(1);
+        }
+
+        .popup-box h2 {
+            font-size: 1.8em;
+            margin-bottom: 8px;
+            font-weight: 800;
+        }
+
+        .overlay-lost h2 {
+            color: #dc2626;
+        }
+
+        .overlay-won h2 {
+            color: #059669;
+        }
+
+        .popup-box p {
+            font-size: 0.9em;
+            color: #57534e;
+            margin-bottom: 16px;
+            line-height: 1.4;
+        }
+
+        .popup-box .stats-summary {
+            display: flex;
+            justify-content: space-around;
+            background: #f5f5f4;
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 18px;
+            border: 1px solid rgba(0, 0, 0, 0.03);
+        }
+
+        .summary-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .summary-label {
+            font-size: 0.7em;
+            color: #78716c;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .summary-val {
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #292524;
+            margin-top: 1px;
+        }
+
+        .confetti-container {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 99;
+            overflow: hidden;
+        }
+
+        .confetti {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            border-radius: 2px;
+            opacity: 0.75;
+            top: -10px;
+        }
+
+        @keyframes confettiFall {
+            0% {
+                transform: translateY(-20px) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(105vh) rotate(540deg);
+                opacity: 0.2;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="confettiContainer" class="confetti-container"></div>
+    <div id="drawerOverlay" class="drawer-overlay" onclick="closeRules()"></div>
+
+    <!-- Defeat Modal -->
+    <div id="gameOverPopup" class="overlay overlay-lost">
+        <div class="popup-box">
+            <h2>GAME OVER</h2>
+            <p>地雷が爆発しました！💥</p>
+            <div class="stats-summary">
+                <div class="summary-item">
+                    <span class="summary-label">Time</span>
+                    <span id="lostTime" class="summary-val">0s</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Mines Left</span>
+                    <span id="lostMines" class="summary-val">0</span>
+                </div>
+            </div>
+            <button class="btn" style="width: 100%; padding: 8px; font-size: 0.95em;" onclick="closeOverlayAndReset('gameOverPopup')">再挑戦する</button>
+        </div>
+    </div>
+
+    <!-- Victory Modal -->
+    <div id="victoryPopup" class="overlay overlay-won">
+        <div class="popup-box">
+            <h2>VICTORY! 🎉</h2>
+            <p>すべての安全地帯を開放しました！</p>
+            <div class="stats-summary">
+                <div class="summary-item">
+                    <span class="summary-label">Time</span>
+                    <span id="wonTime" class="summary-val">0s</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Grid Size</span>
+                    <span id="wonSize" class="summary-val">9x9</span>
+                </div>
+            </div>
+            <button class="btn" style="width: 100%; padding: 8px; font-size: 0.95em;" onclick="closeOverlayAndReset('victoryPopup')">もう一度遊ぶ</button>
+        </div>
+    </div>
+
+    <div class="main">
+        <!-- Rules side-drawer -->
+        <aside id="rulesDrawer" class="rules-panel">
+            <div class="rules-header">
+                <h2>ルール / Rules</h2>
+                <button class="close-rules-btn" onclick="closeRules()" aria-label="閉じる">&times;</button>
+            </div>
+            <div class="rules-tabs" role="tablist" aria-label="Rules Language">
+                <button id="rulesTabJa" class="rules-tab active" type="button" role="tab" aria-selected="true" onclick="switchRules('ja')">日本語</button>
+                <button id="rulesTabEn" class="rules-tab" type="button" role="tab" aria-selected="false" onclick="switchRules('en')">English</button>
+            </div>
+            <div class="rules-content">
+                <ul id="rulesJa" role="tabpanel">
+                    <li>盤面に隠された地雷を避け、すべての安全なマスを開ければクリア。</li>
+                    <li><strong>左クリック</strong>（タップ）でマスを開きます。</li>
+                    <li><strong>右クリック</strong>（長押し）でマスに旗を立てます。</li>
+                    <li><strong>初手安全</strong>: 最初のクリック箇所とその周辺は必ず安全（地雷数0）になります。</li>
+                    <li><strong>コード（Chording）</strong>: すでに開いた数字マスをクリックした際、周囲の旗の数が数字と等しければ、残りのマスを自動で一度に開きます。</li>
+                    <li><strong>スマホ操作</strong>: 下部の「掘る⛏️ / 旗🚩」ボタンで操作モードを切り替えても遊べます。</li>
+                </ul>
+                <ul id="rulesEn" role="tabpanel" style="display: none;">
+                    <li>Clear the board by revealing all safe cells without triggering any mines.</li>
+                    <li><strong>Click/Tap</strong> to reveal a cell.</li>
+                    <li><strong>Right-click / Long-press</strong> to flag a cell.</li>
+                    <li><strong>First-click safety</strong>: The first click is guaranteed to reveal a 0-mine safe area.</li>
+                    <li><strong>Chording</strong>: Click a revealed number cell with the matching number of flagged neighbors to quickly reveal all remaining neighbors.</li>
+                    <li><strong>Mobile</strong>: Switch "Dig⛏️ / Flag🚩" button mode at the bottom for comfortable touch controls.</li>
+                </ul>
+            </div>
+        </aside>
+
+        <!-- Main container -->
+        <div class="container">
+            <h1>MINESWEEPER</h1>
+
+            <!-- Settings / Presets -->
+            <div class="settings">
+                <div class="presets">
+                    <button id="presetEasy" class="btn active" onclick="applyPreset(9, 9, 10, 'presetEasy')">初級 (9x9)</button>
+                    <button id="presetMedium" class="btn" onclick="applyPreset(16, 16, 40, 'presetMedium')">中級 (16x16)</button>
+                    <button id="presetHard" class="btn" onclick="applyPreset(30, 16, 99, 'presetHard')">上級 (30x16)</button>
+                    <button id="btnOpenRules" class="btn" style="background: rgba(245, 158, 11, 0.08); color: #d97706; border-color: rgba(245, 158, 11, 0.2);" onclick="openRules()">ルール 📖</button>
+                </div>
+                <div class="custom-inputs">
+                    <div class="input-group">
+                        <label for="inputWidth">横幅</label>
+                        <input type="number" id="inputWidth" value="9" min="5" max="50" onchange="markCustomActive()">
+                    </div>
+                    <div class="input-group">
+                        <label for="inputHeight">高さ</label>
+                        <input type="number" id="inputHeight" value="9" min="5" max="50" onchange="markCustomActive()">
+                    </div>
+                    <div class="input-group">
+                        <label for="inputMines">地雷</label>
+                        <input type="number" id="inputMines" value="10" min="1" max="999" onchange="markCustomActive()">
+                    </div>
+                    <button id="btnCustomApply" class="btn" onclick="applyCustomSettings()">適用</button>
+                </div>
+            </div>
+
+            <!-- Status Header -->
+            <div class="status-bar">
+                <div class="status-display" aria-label="残りの地雷数">
+                    <span class="status-label">Mines</span>
+                    <span id="mineCounter" class="status-value">010</span>
+                </div>
+                <button id="faceBtn" class="face-btn" onclick="resetGame()" aria-label="リセット">🙂</button>
+                <div class="status-display" aria-label="経過時間">
+                    <span class="status-label">Time</span>
+                    <span id="timerDisplay" class="status-value">000</span>
+                </div>
+            </div>
+
+            <!-- Mobile Controls Mode Switcher -->
+            <div class="mobile-mode-selector">
+                <button id="modeDig" class="mode-btn active" onclick="setMobileMode('dig')">
+                    <span>⛏️</span> 掘る
+                </button>
+                <button id="modeFlag" class="mode-btn" onclick="setMobileMode('flag')">
+                    <span>🚩</span> 旗立て
+                </button>
+            </div>
+
+            <!-- Grid container -->
+            <div class="grid-wrapper" id="gridWrapper">
+                <div id="grid" class="grid"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Game Settings state
+        let boardWidth = 9;
+        let boardHeight = 9;
+        let mineCount = 10;
+
+        // Game status
+        let gridData = [];
+        let isFirstClick = true;
+        let isGameOver = false;
+        let isGameWon = false;
+        let revealedSafeCount = 0;
+        let flagsPlacedCount = 0;
+
+        // Timers
+        let timerVal = 0;
+        let timerInterval = null;
+
+        // Mobile touch & hold mechanics
+        let mobileMode = 'dig'; // 'dig' or 'flag'
+        let longPressTimer = null;
+        let isLongPressing = false;
+        let lastTouchTime = 0; // prevent ghost click after touchend
+        const LONG_PRESS_DURATION = 380; // ms
+
+        // UI references
+        const gridElement = document.getElementById('grid');
+        const gridWrapper = document.getElementById('gridWrapper');
+        const mineCounterEl = document.getElementById('mineCounter');
+        const timerDisplayEl = document.getElementById('timerDisplay');
+        const faceBtn = document.getElementById('faceBtn');
+        const inputWidth = document.getElementById('inputWidth');
+        const inputHeight = document.getElementById('inputHeight');
+        const inputMines = document.getElementById('inputMines');
+        const rulesDrawer = document.getElementById('rulesDrawer');
+        const drawerOverlay = document.getElementById('drawerOverlay');
+
+        // Initial loading setup
+        initGame();
+
+        window.addEventListener('resize', adjustCellSize);
+
+        function initGame() {
+            validateCustomBounds();
+            
+            // State cleanup
+            isFirstClick = true;
+            isGameOver = false;
+            isGameWon = false;
+            revealedSafeCount = 0;
+            flagsPlacedCount = 0;
+            
+            clearInterval(timerInterval);
+            timerInterval = null;
+            timerVal = 0;
+            timerDisplayEl.textContent = "000";
+            
+            faceBtn.textContent = "🙂";
+            gridElement.classList.remove('shake');
+            
+            updateMineCounter();
+            adjustCellSize();
+
+            gridElement.innerHTML = '';
+            gridData = [];
+            
+            for (let r = 0; r < boardHeight; r++) {
+                gridData[r] = [];
+                for (let c = 0; c < boardWidth; c++) {
+                    const cellInfo = {
+                        row: r,
+                        col: c,
+                        isMine: false,
+                        isRevealed: false,
+                        isFlagged: false,
+                        adjMines: 0,
+                        el: null
+                    };
+                    gridData[r][c] = cellInfo;
+
+                    const cellEl = document.createElement('div');
+                    cellEl.className = 'cell unrevealed';
+                    cellEl.tabIndex = 0;
+                    cellInfo.el = cellEl;
+
+                    // Mouse triggers (desktop)
+                    cellEl.addEventListener('click', (e) => {
+                        // Ignore ghost click fired shortly after touchend
+                        if (Date.now() - lastTouchTime < 500) return;
+                        if (isLongPressing) return;
+                        handleCellClick(r, c, false);
+                    });
+
+                    cellEl.addEventListener('contextmenu', (e) => {
+                        e.preventDefault();
+                        handleCellRightClick(r, c);
+                    });
+
+                    // Touch events for mobile (iOS/Android)
+                    cellEl.addEventListener('touchstart', (e) => {
+                        if (isGameOver || isGameWon) return;
+                        isLongPressing = false;
+                        longPressTimer = setTimeout(() => {
+                            isLongPressing = true;
+                            handleCellRightClick(r, c);
+                            if (navigator.vibrate) navigator.vibrate(40);
+                        }, LONG_PRESS_DURATION);
+                    }, { passive: true });
+
+                    cellEl.addEventListener('touchend', (e) => {
+                        lastTouchTime = Date.now();
+                        if (longPressTimer) clearTimeout(longPressTimer);
+                        if (isLongPressing) {
+                            // Already handled as flag, skip tap
+                            isLongPressing = false;
+                            return;
+                        }
+                        // Handle as tap (dig or flag based on mode)
+                        if (!isGameOver && !isGameWon) {
+                            if (mobileMode === 'flag') {
+                                handleCellRightClick(r, c);
+                            } else {
+                                handleCellClick(r, c, false);
+                            }
+                        }
+                    });
+
+                    cellEl.addEventListener('touchmove', (e) => {
+                        if (longPressTimer) clearTimeout(longPressTimer);
+                        isLongPressing = false;
+                    }, { passive: true });
+
+                    // Accessibility keyboard interactions
+                    cellEl.addEventListener('keydown', (e) => {
+                        if (e.key === ' ' || e.key === 'Enter') {
+                            e.preventDefault();
+                            if (mobileMode === 'flag') {
+                                handleCellRightClick(r, c);
+                            } else {
+                                handleCellClick(r, c, false);
+                            }
+                        } else if (e.key === 'f' || e.key === 'F') {
+                            e.preventDefault();
+                            handleCellRightClick(r, c);
+                        }
+                    });
+
+                    gridElement.appendChild(cellEl);
+                }
+            }
+        }
+
+        // Dynamically compute the size of cells based on viewport height and width
+        function adjustCellSize() {
+            // Margins and other elements offset sizes
+            const horizontalPadding = 40; // container padding and safe margin
+            const verticalOffsets = 310;  // title + input controls + status bar + mobile bar heights combined
+
+            const wrapperWidth = gridWrapper.clientWidth - horizontalPadding;
+            const availableHeight = window.innerHeight - verticalOffsets;
+
+            // Calculate widths
+            const cellFitWidth = Math.floor(wrapperWidth / boardWidth) - 3;
+            const cellFitHeight = Math.floor(availableHeight / boardHeight) - 3;
+
+            // Select optimal dimension
+            let computedSize = Math.min(cellFitWidth, cellFitHeight);
+            
+            // Enforce bounds limits so keys remain selectable
+            computedSize = Math.max(26, Math.min(computedSize, 42));
+
+            document.documentElement.style.setProperty('--cell-size', `${computedSize}px`);
+            gridElement.style.gridTemplateColumns = `repeat(${boardWidth}, var(--cell-size))`;
+        }
+
+        // Drawer rules panel logic
+        function openRules() {
+            rulesDrawer.classList.add('open');
+            drawerOverlay.classList.add('show');
+        }
+
+        function closeRules() {
+            rulesDrawer.classList.remove('open');
+            drawerOverlay.classList.remove('show');
+        }
+
+        // Switch languages tabs
+        function switchRules(lang) {
+            const isJa = lang === 'ja';
+            document.getElementById('rulesTabJa').classList.toggle('active', isJa);
+            document.getElementById('rulesTabJa').setAttribute('aria-selected', isJa);
+            document.getElementById('rulesTabEn').classList.toggle('active', !isJa);
+            document.getElementById('rulesTabEn').setAttribute('aria-selected', !isJa);
+
+            document.getElementById('rulesJa').style.display = isJa ? 'block' : 'none';
+            document.getElementById('rulesEn').style.display = !isJa ? 'block' : 'none';
+        }
+
+        function applyCustomSettings() {
+            boardWidth = parseInt(inputWidth.value) || 9;
+            boardHeight = parseInt(inputHeight.value) || 9;
+            mineCount = parseInt(inputMines.value) || 10;
+
+            document.querySelectorAll('.presets .btn').forEach(b => b.classList.remove('active'));
+            initGame();
+        }
+
+        function validateCustomBounds() {
+            let w = parseInt(inputWidth.value) || 9;
+            let h = parseInt(inputHeight.value) || 9;
+            let m = parseInt(inputMines.value) || 10;
+
+            if (w < 5) w = 5;
+            if (w > 50) w = 50;
+            if (h < 5) h = 5;
+            if (h > 50) h = 50;
+
+            const maxMines = Math.max(1, (w * h) - 9);
+            if (m < 1) m = 1;
+            if (m > maxMines) m = maxMines;
+
+            inputWidth.value = w;
+            inputHeight.value = h;
+            inputMines.value = m;
+        }
+
+        function markCustomActive() {
+            validateCustomBounds();
+        }
+
+        function applyPreset(w, h, m, presetId) {
+            boardWidth = w;
+            boardHeight = h;
+            mineCount = m;
+
+            inputWidth.value = w;
+            inputHeight.value = h;
+            inputMines.value = m;
+
+            document.querySelectorAll('.presets .btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(presetId).classList.add('active');
+
+            initGame();
+        }
+
+        function setMobileMode(mode) {
+            mobileMode = mode;
+            document.getElementById('modeDig').classList.toggle('active', mode === 'dig');
+            document.getElementById('modeFlag').classList.toggle('active', mode === 'flag');
+        }
+
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                timerVal++;
+                if (timerVal > 999) {
+                    timerDisplayEl.textContent = "999";
+                } else {
+                    timerDisplayEl.textContent = String(timerVal).padStart(3, '0');
+                }
+            }, 1000);
+        }
+
+        function updateMineCounter() {
+            const displayVal = mineCount - flagsPlacedCount;
+            if (displayVal < 0) {
+                const absVal = Math.abs(displayVal);
+                mineCounterEl.textContent = "-" + String(absVal).padStart(2, '0');
+            } else {
+                mineCounterEl.textContent = String(displayVal).padStart(3, '0');
+            }
+        }
+
+        function isValid(r, c) {
+            return r >= 0 && r < boardHeight && c >= 0 && c < boardWidth;
+        }
+
+        function getNeighbors(r, c) {
+            const list = [];
+            for (let dr = -1; dr <= 1; dr++) {
+                for (let dc = -1; dc <= 1; dc++) {
+                    if (dr === 0 && dc === 0) continue;
+                    const nr = r + dr;
+                    const nc = c + dc;
+                    if (isValid(nr, nc)) {
+                        list.push(gridData[nr][nc]);
+                    }
+                }
+            }
+            return list;
+        }
+
+        function generateMines(startR, startC) {
+            let minesPlanted = 0;
+            const safeCells = new Set();
+            
+            for (let dr = -1; dr <= 1; dr++) {
+                for (let dc = -1; dc <= 1; dc++) {
+                    const nr = startR + dr;
+                    const nc = startC + dc;
+                    if (isValid(nr, nc)) {
+                        safeCells.add(`${nr},${nc}`);
+                    }
+                }
+            }
+
+            const totalCells = boardWidth * boardHeight;
+            const neededSafeCount = safeCells.size;
+            
+            if (totalCells - neededSafeCount < mineCount) {
+                safeCells.clear();
+                safeCells.add(`${startR},${startC}`);
+            }
+
+            while (minesPlanted < mineCount) {
+                const randR = Math.floor(Math.random() * boardHeight);
+                const randC = Math.floor(Math.random() * boardWidth);
+                const key = `${randR},${randC}`;
+
+                if (!gridData[randR][randC].isMine && !safeCells.has(key)) {
+                    gridData[randR][randC].isMine = true;
+                    minesPlanted++;
+                }
+            }
+
+            for (let r = 0; r < boardHeight; r++) {
+                for (let c = 0; c < boardWidth; c++) {
+                    if (gridData[r][c].isMine) continue;
+                    const neighbors = getNeighbors(r, c);
+                    gridData[r][c].adjMines = neighbors.filter(n => n.isMine).length;
+                }
+            }
+        }
+
+        function handleCellClick(r, c, isChording = false) {
+            if (isGameOver || isGameWon) return;
+
+            const cell = gridData[r][c];
+            if (cell.isFlagged) return;
+
+            if (cell.isRevealed) {
+                if (!isChording) handleChording(r, c);
+                return;
+            }
+
+            if (!isChording && mobileMode === 'flag') {
+                handleCellRightClick(r, c);
+                return;
+            }
+
+            if (isFirstClick) {
+                isFirstClick = false;
+                generateMines(r, c);
+                startTimer();
+            }
+
+            revealCell(r, c);
+            checkVictory();
+        }
+
+        function handleCellRightClick(r, c) {
+            if (isGameOver || isGameWon) return;
+            
+            const cell = gridData[r][c];
+            if (cell.isRevealed) return;
+
+            cell.isFlagged = !cell.isFlagged;
+            if (cell.isFlagged) {
+                cell.el.classList.remove('unrevealed');
+                cell.el.classList.add('flagged');
+                flagsPlacedCount++;
+            } else {
+                cell.el.classList.remove('flagged');
+                cell.el.classList.add('unrevealed');
+                flagsPlacedCount--;
+            }
+
+            updateMineCounter();
+        }
+
+        function handleChording(r, c) {
+            const cell = gridData[r][c];
+            if (cell.adjMines === 0) return;
+
+            const neighbors = getNeighbors(r, c);
+            const flagCount = neighbors.filter(n => n.isFlagged).length;
+
+            if (flagCount === cell.adjMines) {
+                neighbors.forEach(n => {
+                    if (!n.isRevealed && !n.isFlagged) {
+                        handleCellClick(n.row, n.col, true);
+                    }
+                });
+            }
+        }
+
+        function revealCell(r, c) {
+            const cell = gridData[r][c];
+            if (cell.isRevealed || cell.isFlagged) return;
+
+            cell.isRevealed = true;
+            cell.el.classList.remove('unrevealed');
+            cell.el.classList.add('revealed');
+            revealedSafeCount++;
+
+            if (cell.isMine) {
+                triggerGameOver(r, c);
+                return;
+            }
+
+            if (cell.adjMines > 0) {
+                cell.el.textContent = cell.adjMines;
+                cell.el.classList.add(`n-${cell.adjMines}`);
+            } else {
+                const neighbors = getNeighbors(r, c);
+                neighbors.forEach(n => {
+                    if (!n.isRevealed && !n.isFlagged) {
+                        revealCell(n.row, n.col);
+                    }
+                });
+            }
+        }
+
+        function checkVictory() {
+            const totalCells = boardWidth * boardHeight;
+            const targetSafeCount = totalCells - mineCount;
+
+            if (revealedSafeCount === targetSafeCount && !isGameOver) {
+                isGameWon = true;
+                clearInterval(timerInterval);
+                faceBtn.textContent = "😎";
+
+                for (let r = 0; r < boardHeight; r++) {
+                    for (let c = 0; c < boardWidth; c++) {
+                        if (gridData[r][c].isMine && !gridData[r][c].isFlagged) {
+                            gridData[r][c].isFlagged = true;
+                            gridData[r][c].el.classList.remove('unrevealed');
+                            gridData[r][c].el.classList.add('flagged');
+                        }
+                    }
+                }
+                flagsPlacedCount = mineCount;
+                updateMineCounter();
+
+                document.getElementById('wonTime').textContent = String(timerVal) + "秒";
+                document.getElementById('wonSize').textContent = `${boardWidth}x${boardHeight}`;
+                
+                setTimeout(() => {
+                    document.getElementById('victoryPopup').classList.add('show');
+                    launchConfetti();
+                }, 400);
+            }
+        }
+
+        function triggerGameOver(explodedR, explodedC) {
+            isGameOver = true;
+            clearInterval(timerInterval);
+            faceBtn.textContent = "💀";
+
+            gridElement.classList.add('shake');
+            gridData[explodedR][explodedC].el.classList.add('exploded');
+
+            for (let r = 0; r < boardHeight; r++) {
+                for (let c = 0; c < boardWidth; c++) {
+                    const cell = gridData[r][c];
+                    if (cell.isMine) {
+                        if (!cell.isFlagged) {
+                            cell.el.classList.remove('unrevealed');
+                            cell.el.classList.add('mine');
+                        }
+                    } else {
+                        if (cell.isFlagged) {
+                            cell.el.classList.add('wrong-flag');
+                        }
+                    }
+                }
+            }
+
+            document.getElementById('lostTime').textContent = String(timerVal) + "秒";
+            const minesRemainingVal = Math.max(0, mineCount - flagsPlacedCount);
+            document.getElementById('lostMines').textContent = String(minesRemainingVal);
+
+            setTimeout(() => {
+                document.getElementById('gameOverPopup').classList.add('show');
+            }, 900);
+        }
+
+        function closeOverlayAndReset(id) {
+            document.getElementById(id).classList.remove('show');
+            resetGame();
+        }
+
+        function launchConfetti() {
+            const container = document.getElementById('confettiContainer');
+            container.innerHTML = '';
+            
+            const confettiColors = ['#4f46e5', '#7c3aed', '#10b981', '#fbbf24', '#ef4444', '#06b6d4'];
+            const confettiCount = 60;
+
+            for (let i = 0; i < confettiCount; i++) {
+                const conf = document.createElement('div');
+                conf.className = 'confetti';
+                
+                const leftPos = Math.random() * 100;
+                const size = 4 + Math.random() * 6;
+                const color = confettiColors[Math.floor(Math.random() * confettiColors.length)];
+                const duration = 2.0 + Math.random() * 2.0;
+                const delay = Math.random() * 1.0;
+
+                conf.style.left = `${leftPos}vw`;
+                conf.style.width = `${size}px`;
+                conf.style.height = `${size}px`;
+                conf.style.backgroundColor = color;
+                conf.style.animation = `confettiFall ${duration}s linear ${delay}s forwards`;
+
+                container.appendChild(conf);
+            }
+        }
+    </script>
+</body>
+</html>
