@@ -2522,7 +2522,7 @@
             }
         }
 
-        // --- ASSEMBLY LOGIC ---
+        // --- ASSEMBLY LOGIC (PRONOUNCE SYLLABLE ON SELECTION) ---
         function renderAssemblyState() {
             const slotsArea = document.getElementById('assembly-slots-area');
             const poolArea = document.getElementById('assembly-pool-area');
@@ -2544,12 +2544,15 @@
         }
 
         function addAssemblySlot(poolChipId) {
-            playSound('click');
             const chip = currentLesson.assemblyPool.find(c => c.id === poolChipId);
             if (!chip || chip.used) return;
 
             chip.used = true;
             currentLesson.assemblySlots.push(chip);
+            
+            // Speak the 1 Hangul syllable pronunciation upon selection
+            speakKorean(chip.syllable);
+
             renderAssemblyState();
         }
 
