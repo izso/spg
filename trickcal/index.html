@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>trickcal (트릭컬 단어장)</title>
     <style>
         :root {
@@ -37,6 +37,7 @@
             background-color: #f0f4f8;
             color: var(--dark);
             min-height: 100vh;
+            min-height: 100dvh;
             display: flex;
             flex-direction: column;
         }
@@ -616,13 +617,14 @@
             pointer-events: none;
         }
 
-        /* --- LESSON RUNNER MODAL / SCREEN --- */
+        /* --- LESSON RUNNER MODAL / SCREEN (RESPONSIVE SAFE AREA FIX) --- */
         .lesson-overlay {
             position: fixed;
             top: 0;
             left: 0;
             width: 100vw;
             height: 100vh;
+            height: 100dvh;
             background: white;
             z-index: 1000;
             display: none;
@@ -634,7 +636,7 @@
         }
 
         .lesson-header {
-            padding: 16px 20px;
+            padding: 16px 20px 8px 20px;
             display: flex;
             align-items: center;
             gap: 16px;
@@ -667,16 +669,17 @@
             max-width: 600px;
             width: 100%;
             margin: 0 auto;
-            padding: 20px;
+            padding: 16px 20px 100px 20px;
             display: flex;
             flex-direction: column;
-            justify-content: center;
+            justify-content: flex-start;
+            overflow-y: auto;
         }
 
         .q-prompt {
-            font-size: 1.4rem;
+            font-size: 1.3rem;
             font-weight: 800;
-            margin-bottom: 24px;
+            margin-bottom: 16px;
             text-align: left;
         }
 
@@ -684,18 +687,18 @@
             background: #f7f9fa;
             border: 2px solid var(--gray-border);
             border-radius: var(--btn-radius);
-            padding: 24px;
+            padding: 20px;
             text-align: center;
-            margin-bottom: 24px;
+            margin-bottom: 16px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
         }
 
         .q-target-avatar {
-            width: 100px;
-            height: 100px;
+            width: 90px;
+            height: 90px;
             border-radius: 50%;
             object-fit: cover;
             border: 3px solid var(--primary);
@@ -704,7 +707,7 @@
         }
 
         .q-target-kr {
-            font-size: 2.5rem;
+            font-size: 2.2rem;
             font-weight: 900;
             color: var(--dark);
         }
@@ -714,9 +717,9 @@
             color: white;
             border: none;
             border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            font-size: 1.4rem;
+            width: 46px;
+            height: 46px;
+            font-size: 1.3rem;
             cursor: pointer;
             box-shadow: 0 4px 0 var(--secondary-dark);
             display: flex;
@@ -727,15 +730,15 @@
         .q-options-grid {
             display: grid;
             grid-template-columns: 1fr;
-            gap: 12px;
+            gap: 10px;
         }
 
         .option-card {
             background: white;
             border: 2px solid var(--gray-border);
             border-radius: var(--btn-radius);
-            padding: 16px 20px;
-            font-size: 1.1rem;
+            padding: 14px 18px;
+            font-size: 1.05rem;
             font-weight: 700;
             cursor: pointer;
             box-shadow: 0 4px 0 var(--gray-border);
@@ -756,17 +759,39 @@
             color: var(--secondary-dark);
         }
 
-        /* Bottom Feedback Bar */
-        .feedback-sheet {
-            position: absolute;
+        /* FIXED STICKY LESSON FOOTER (SAFE AREA FIT FOR MOBILE UI BARS) */
+        .lesson-footer {
+            position: fixed;
             bottom: 0;
             left: 0;
             width: 100%;
-            padding: 24px 20px;
+            background: #ffffff;
+            border-top: 2px solid var(--gray-border);
+            padding: 12px 20px;
+            padding-bottom: max(16px, env(safe-area-inset-bottom, 16px));
+            z-index: 1050;
+            display: flex;
+            justify-content: center;
+        }
+
+        .lesson-footer .big-btn {
+            max-width: 600px;
+            width: 100%;
+        }
+
+        /* Bottom Feedback Bar */
+        .feedback-sheet {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            padding: 20px 20px;
+            padding-bottom: max(24px, env(safe-area-inset-bottom, 24px));
             display: none;
             flex-direction: column;
             gap: 12px;
-            z-index: 10;
+            z-index: 1100;
+            box-shadow: 0 -4px 12px rgba(0,0,0,0.1);
         }
 
         .feedback-sheet.correct {
@@ -1026,7 +1051,7 @@
         Trickcal copyrighted by EPIDGames, Trickcal Apostle Viewer by izso
     </footer>
 
-    <!-- LESSON SCREEN OVERLAY -->
+    <!-- LESSON SCREEN OVERLAY (RESPONSIVE SAFE AREA FIT FOR MOBILE UI BARS) -->
     <div class="lesson-overlay" id="lesson-overlay">
         <div class="lesson-header">
             <div class="close-btn" onclick="exitLesson()">✕</div>
@@ -2522,7 +2547,7 @@
             }
         }
 
-        // --- ASSEMBLY LOGIC (PRONOUNCE SYLLABLE ON SELECTION) ---
+        // --- ASSEMBLY LOGIC ---
         function renderAssemblyState() {
             const slotsArea = document.getElementById('assembly-slots-area');
             const poolArea = document.getElementById('assembly-pool-area');
@@ -2549,10 +2574,7 @@
 
             chip.used = true;
             currentLesson.assemblySlots.push(chip);
-            
-            // Speak the 1 Hangul syllable pronunciation upon selection
             speakKorean(chip.syllable);
-
             renderAssemblyState();
         }
 
