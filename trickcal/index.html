@@ -1,0 +1,2821 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>トリッカル・もちもちほっぺ大作戦 単語アプリ (트릭컬 단어장)</title>
+    <style>
+        :root {
+            --primary: #58cc02;
+            --primary-dark: #46a302;
+            --secondary: #1cb0f6;
+            --secondary-dark: #1899d6;
+            --purple: #ce82ff;
+            --purple-dark: #b359ec;
+            --yellow: #ffc800;
+            --yellow-dark: #e5b200;
+            --danger: #ff4b4b;
+            --danger-dark: #ea2b2b;
+            --gray-light: #f7f9fa;
+            --gray-border: #e5e5e5;
+            --gray-text: #777777;
+            --dark: #3c3c3c;
+            --card-shadow: 0 4px 0 var(--gray-border);
+            --btn-radius: 16px;
+            --font-main: 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: var(--font-main);
+            user-select: none;
+        }
+
+        body {
+            background-color: #f0f4f8;
+            color: var(--dark);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Top Header Bar */
+        header {
+            background: #ffffff;
+            border-bottom: 2px solid var(--gray-border);
+            padding: 14px 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 800;
+            font-size: 1.25rem;
+            color: var(--primary-dark);
+            cursor: pointer;
+        }
+
+        .logo-icon {
+            width: 38px;
+            height: 38px;
+            background: var(--primary);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.4rem;
+            box-shadow: 0 3px 0 var(--primary-dark);
+        }
+
+        /* Main Container */
+        main {
+            flex: 1;
+            max-width: 850px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 20px 16px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Navigation Tabs */
+        nav.nav-tabs {
+            display: flex;
+            justify-content: space-around;
+            background: white;
+            border: 2px solid var(--gray-border);
+            border-radius: var(--btn-radius);
+            margin-bottom: 20px;
+            padding: 6px;
+            box-shadow: var(--card-shadow);
+        }
+
+        .nav-tab {
+            flex: 1;
+            text-align: center;
+            padding: 10px 4px;
+            font-weight: 700;
+            color: var(--gray-text);
+            cursor: pointer;
+            border-radius: 12px;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.82rem;
+        }
+
+        .nav-tab .tab-icon {
+            font-size: 1.25rem;
+        }
+
+        .nav-tab.active {
+            background: #eef9e4;
+            color: var(--primary-dark);
+            border: 1.5px solid var(--primary);
+        }
+
+        /* View Panels */
+        .view-panel {
+            display: none;
+        }
+        .view-panel.active {
+            display: block;
+        }
+
+        /* --- COURSE VIEW (DUOLINGO PATH) --- */
+        .unit-section {
+            background: white;
+            border: 2px solid var(--gray-border);
+            border-radius: var(--btn-radius);
+            padding: 16px;
+            margin-bottom: 24px;
+            box-shadow: var(--card-shadow);
+        }
+
+        .unit-header {
+            background: var(--primary);
+            color: white;
+            padding: 14px 18px;
+            border-radius: 12px;
+            box-shadow: 0 4px 0 var(--primary-dark);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .unit-title {
+            font-size: 1.15rem;
+            font-weight: 800;
+        }
+        .unit-subtitle {
+            font-size: 0.85rem;
+            opacity: 0.95;
+        }
+
+        .path-container {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            padding: 12px 0 36px 0;
+        }
+
+        .path-node {
+            width: 76px;
+            height: 76px;
+            border-radius: 50%;
+            background: var(--primary);
+            box-shadow: 0 6px 0 var(--primary-dark);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.8rem;
+            cursor: pointer;
+            position: relative;
+            transition: transform 0.1s, box-shadow 0.1s;
+        }
+
+        .path-node:active {
+            transform: translateY(3px);
+            box-shadow: 0 3px 0 var(--primary-dark);
+        }
+
+        .path-node.locked {
+            background: #e5e5e5;
+            box-shadow: 0 6px 0 #afafaf;
+            color: #afafaf;
+            cursor: not-allowed;
+        }
+
+        .path-node.completed {
+            background: var(--yellow);
+            box-shadow: 0 6px 0 var(--yellow-dark);
+        }
+
+        .node-label {
+            position: absolute;
+            bottom: -28px;
+            white-space: nowrap;
+            background: white;
+            padding: 3px 10px;
+            border-radius: 12px;
+            border: 1.5px solid var(--gray-border);
+            font-size: 0.8rem;
+            font-weight: 800;
+            color: var(--dark);
+            box-shadow: 0 2px 0 var(--gray-border);
+        }
+
+        /* --- TRAINING VIEW --- */
+        .training-container {
+            background: white;
+            border: 2px solid var(--gray-border);
+            border-radius: var(--btn-radius);
+            padding: 24px;
+            box-shadow: var(--card-shadow);
+            max-width: 550px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .setting-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .setting-title {
+            font-size: 0.95rem;
+            font-weight: 800;
+            color: var(--dark);
+        }
+
+        .option-pills-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 10px;
+        }
+
+        .pill-btn {
+            background: white;
+            border: 2px solid var(--gray-border);
+            border-radius: 12px;
+            padding: 12px 14px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            cursor: pointer;
+            text-align: center;
+            box-shadow: 0 3px 0 var(--gray-border);
+            transition: all 0.1s;
+        }
+
+        .pill-btn.active {
+            background: #eef7fe;
+            border-color: var(--secondary);
+            color: var(--secondary-dark);
+            box-shadow: 0 3px 0 var(--secondary);
+        }
+
+        /* --- ROSTER / DICTIONARY VIEW --- */
+        .roster-search-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid var(--gray-border);
+            border-radius: var(--btn-radius);
+            font-size: 1rem;
+            outline: none;
+        }
+        .search-input:focus {
+            border-color: var(--secondary);
+        }
+
+        .faction-filter {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 10px;
+            margin-bottom: 16px;
+        }
+
+        .filter-btn {
+            padding: 6px 14px;
+            border-radius: 20px;
+            background: white;
+            border: 2px solid var(--gray-border);
+            font-weight: 700;
+            font-size: 0.85rem;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .filter-btn.active {
+            background: var(--secondary);
+            color: white;
+            border-color: var(--secondary-dark);
+        }
+
+        .roster-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        .char-card {
+            background: white;
+            border: 2px solid var(--gray-border);
+            border-radius: var(--btn-radius);
+            padding: 16px;
+            box-shadow: var(--card-shadow);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 10px;
+            position: relative;
+            transition: transform 0.15s;
+        }
+
+        .char-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .char-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid var(--gray-border);
+            background: #f0f4f8;
+            box-shadow: 0 4px 0 rgba(0,0,0,0.06);
+        }
+
+        .char-kr {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: var(--dark);
+        }
+
+        .char-jp {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--primary-dark);
+        }
+
+        .badges-row {
+            display: flex;
+            gap: 6px;
+            justify-content: center;
+        }
+
+        .faction-badge {
+            font-size: 0.75rem;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-weight: 700;
+            color: white;
+            background: var(--purple);
+        }
+
+        .unreleased-badge {
+            font-size: 0.75rem;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-weight: 700;
+            color: #666;
+            background: #e5e5e5;
+        }
+
+        .audio-btn-row {
+            display: flex;
+            gap: 6px;
+            width: 100%;
+            margin-top: 4px;
+        }
+
+        .char-audio-btn {
+            flex: 1;
+            background: #eef7fe;
+            border: 2px solid var(--secondary);
+            color: var(--secondary-dark);
+            border-radius: 12px;
+            padding: 6px 8px;
+            font-weight: 700;
+            font-size: 0.8rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            justify-content: center;
+        }
+
+        .char-audio-btn:hover {
+            background: #d8eeff;
+        }
+
+        /* --- FLASHCARD VIEW --- */
+        .flashcard-container {
+            background: white;
+            border: 2px solid var(--gray-border);
+            border-radius: var(--btn-radius);
+            padding: 30px 20px;
+            box-shadow: var(--card-shadow);
+            text-align: center;
+            max-width: 480px;
+            margin: 0 auto;
+        }
+
+        .card-flip-box {
+            width: 100%;
+            min-height: 250px;
+            background: var(--gray-light);
+            border: 2px solid var(--gray-border);
+            border-radius: var(--btn-radius);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            cursor: pointer;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 0 var(--gray-border);
+            position: relative;
+            gap: 12px;
+        }
+
+        .card-flip-avatar {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid var(--primary);
+            box-shadow: 0 4px 0 rgba(0,0,0,0.08);
+            display: none;
+        }
+
+        .card-flip-kr {
+            font-size: 2.8rem;
+            font-weight: 900;
+        }
+
+        .card-flip-jp {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--primary-dark);
+            display: none;
+        }
+
+        .card-tap-hint {
+            font-size: 0.85rem;
+            color: var(--gray-text);
+            margin-top: 8px;
+            font-weight: 700;
+        }
+
+        /* --- HANGUL ASSEMBLY SLOTS & POOL --- */
+        .assembly-slots-area {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            align-items: center;
+            min-height: 64px;
+            border-bottom: 2px dashed var(--gray-border);
+            padding-bottom: 12px;
+            margin-bottom: 20px;
+            width: 100%;
+        }
+
+        .assembly-chip {
+            background: white;
+            border: 2px solid var(--secondary);
+            border-radius: 12px;
+            padding: 10px 18px;
+            font-size: 1.6rem;
+            font-weight: 900;
+            color: var(--secondary-dark);
+            box-shadow: 0 4px 0 var(--secondary);
+            cursor: pointer;
+            transition: all 0.1s;
+        }
+
+        .assembly-chip:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 var(--secondary);
+        }
+
+        .assembly-pool-area {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 10px;
+        }
+
+        .assembly-pool-chip {
+            background: white;
+            border: 2px solid var(--gray-border);
+            border-radius: 12px;
+            padding: 10px 18px;
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--dark);
+            box-shadow: 0 4px 0 var(--gray-border);
+            cursor: pointer;
+            transition: all 0.1s;
+        }
+
+        .assembly-pool-chip:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 var(--gray-border);
+        }
+
+        .assembly-pool-chip.used {
+            opacity: 0.2;
+            pointer-events: none;
+            box-shadow: none;
+            transform: none;
+        }
+
+        /* --- SPEED MATCH GAME VIEW --- */
+        .match-game-container {
+            background: white;
+            border: 2px solid var(--gray-border);
+            border-radius: var(--btn-radius);
+            padding: 20px;
+            box-shadow: var(--card-shadow);
+            text-align: center;
+        }
+
+        .match-timer-bar {
+            width: 100%;
+            height: 12px;
+            background: #e5e5e5;
+            border-radius: 6px;
+            overflow: hidden;
+            margin: 16px 0;
+        }
+
+        .match-timer-fill {
+            height: 100%;
+            background: var(--yellow);
+            width: 100%;
+            transition: width 1s linear;
+        }
+
+        .match-columns-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-top: 20px;
+        }
+
+        .match-col {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .match-col-header {
+            font-size: 0.9rem;
+            font-weight: 800;
+            color: var(--gray-text);
+            text-align: center;
+            padding-bottom: 4px;
+            border-bottom: 2px solid var(--gray-border);
+        }
+
+        .match-tile {
+            background: white;
+            border: 2px solid var(--gray-border);
+            border-radius: var(--btn-radius);
+            padding: 16px 10px;
+            font-size: 1.25rem;
+            font-weight: 800;
+            cursor: pointer;
+            box-shadow: 0 4px 0 var(--gray-border);
+            transition: all 0.1s;
+            text-align: center;
+            user-select: none;
+        }
+
+        .match-tile:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 var(--gray-border);
+        }
+
+        .match-tile.selected {
+            border-color: var(--secondary);
+            background: #eef7fe;
+            box-shadow: 0 4px 0 var(--secondary);
+            color: var(--secondary-dark);
+        }
+
+        .match-tile.matched {
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        /* --- LESSON RUNNER MODAL / SCREEN --- */
+        .lesson-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: white;
+            z-index: 1000;
+            display: none;
+            flex-direction: column;
+        }
+
+        .lesson-overlay.active {
+            display: flex;
+        }
+
+        .lesson-header {
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .close-btn {
+            font-size: 1.5rem;
+            color: var(--gray-text);
+            cursor: pointer;
+            font-weight: 800;
+        }
+
+        .progress-bar-outer {
+            flex: 1;
+            height: 16px;
+            background: #e5e5e5;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .progress-bar-inner {
+            height: 100%;
+            background: var(--primary);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .lesson-content {
+            flex: 1;
+            max-width: 600px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .q-prompt {
+            font-size: 1.4rem;
+            font-weight: 800;
+            margin-bottom: 24px;
+            text-align: left;
+        }
+
+        .q-card-main {
+            background: #f7f9fa;
+            border: 2px solid var(--gray-border);
+            border-radius: var(--btn-radius);
+            padding: 24px;
+            text-align: center;
+            margin-bottom: 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .q-target-avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid var(--primary);
+            box-shadow: 0 4px 0 rgba(0,0,0,0.08);
+            background: white;
+        }
+
+        .q-target-kr {
+            font-size: 2.5rem;
+            font-weight: 900;
+            color: var(--dark);
+        }
+
+        .q-tts-btn {
+            background: var(--secondary);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            font-size: 1.4rem;
+            cursor: pointer;
+            box-shadow: 0 4px 0 var(--secondary-dark);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .q-options-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+
+        .option-card {
+            background: white;
+            border: 2px solid var(--gray-border);
+            border-radius: var(--btn-radius);
+            padding: 16px 20px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 0 var(--gray-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.1s;
+        }
+
+        .option-card:hover {
+            background: #f7f9fa;
+        }
+
+        .option-card.selected {
+            border-color: var(--secondary);
+            background: #ddf4ff;
+            box-shadow: 0 4px 0 var(--secondary-dark);
+            color: var(--secondary-dark);
+        }
+
+        /* Bottom Feedback Bar */
+        .feedback-sheet {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            padding: 24px 20px;
+            display: none;
+            flex-direction: column;
+            gap: 12px;
+            z-index: 10;
+        }
+
+        .feedback-sheet.correct {
+            display: flex;
+            background: #d7ffb8;
+            color: var(--primary-dark);
+            border-top: 2px solid var(--primary);
+        }
+
+        .feedback-sheet.incorrect {
+            display: flex;
+            background: #ffdfe0;
+            color: var(--danger-dark);
+            border-top: 2px solid var(--danger);
+        }
+
+        .feedback-title {
+            font-size: 1.4rem;
+            font-weight: 900;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .feedback-body {
+            font-size: 1rem;
+            font-weight: 700;
+        }
+
+        .big-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: var(--btn-radius);
+            padding: 14px 28px;
+            font-size: 1.1rem;
+            font-weight: 800;
+            cursor: pointer;
+            box-shadow: 0 4px 0 var(--primary-dark);
+            transition: all 0.1s;
+            text-align: center;
+        }
+
+        .big-btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 var(--primary-dark);
+        }
+
+        .big-btn.secondary {
+            background: var(--secondary);
+            box-shadow: 0 4px 0 var(--secondary-dark);
+        }
+
+        /* Result View */
+        .result-card {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .result-title {
+            font-size: 2rem;
+            font-weight: 900;
+            color: var(--yellow-dark);
+        }
+
+        .result-stats {
+            display: flex;
+            gap: 20px;
+        }
+
+        .result-stat-box {
+            background: white;
+            border: 2px solid var(--gray-border);
+            border-radius: var(--btn-radius);
+            padding: 16px 24px;
+            box-shadow: var(--card-shadow);
+        }
+
+        .result-stat-val {
+            font-size: 1.8rem;
+            font-weight: 900;
+        }
+        .result-stat-lbl {
+            font-size: 0.85rem;
+            color: var(--gray-text);
+            font-weight: 700;
+        }
+
+        /* Canvas Confetti */
+        #confetti-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 2000;
+        }
+
+        /* Footer Credits */
+        footer.app-footer {
+            margin-top: auto;
+            padding: 20px 16px;
+            text-align: center;
+            font-size: 0.8rem;
+            font-weight: 400;
+            color: var(--gray-text);
+            border-top: 1px solid var(--gray-border);
+            background: #ffffff;
+        }
+
+        @media (max-width: 600px) {
+            .roster-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+            .nav-tab { padding: 8px 2px; font-size: 0.75rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="confetti-canvas"></canvas>
+
+    <!-- Top Header -->
+    <header>
+        <div class="logo-area" onclick="showView('course')">
+            <div class="logo-icon">트</div>
+            <span>トリッカル単語</span>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main>
+        <!-- Navigation Tabs -->
+        <nav class="nav-tabs">
+            <div class="nav-tab active" onclick="showView('course')" id="tab-course">
+                <span class="tab-icon">🗺️</span>
+                <span>コース</span>
+            </div>
+            <div class="nav-tab" onclick="showView('training')" id="tab-training">
+                <span class="tab-icon">🏋️</span>
+                <span>トレーニング</span>
+            </div>
+            <div class="nav-tab" onclick="showView('roster')" id="tab-roster">
+                <span class="tab-icon">📚</span>
+                <span>全キャラ図鑑</span>
+            </div>
+            <div class="nav-tab" onclick="showView('flashcard')" id="tab-flashcard">
+                <span class="tab-icon">🎴</span>
+                <span>単語カード</span>
+            </div>
+            <div class="nav-tab" onclick="showView('speed')" id="tab-speed">
+                <span class="tab-icon">⚔️</span>
+                <span>スピードマッチ</span>
+            </div>
+        </nav>
+
+        <!-- VIEW 1: COURSE / PATH VIEW -->
+        <div class="view-panel active" id="view-course">
+            <div id="unit-sections-container">
+                <!-- Dynamic Unit Sections generated here -->
+            </div>
+        </div>
+
+        <!-- VIEW 2: TRAINING MODE VIEW -->
+        <div class="view-panel" id="view-training">
+            <div class="training-container">
+                <h2 style="text-align: center; color: var(--dark);">🏋️ カスタムトレーニング</h2>
+                <p style="text-align: center; color: var(--gray-text); margin-top: -10px; font-size: 0.9rem;">好きな問題形式を選んで全キャラから集中特訓！</p>
+
+                <!-- Format Selection -->
+                <div class="setting-group">
+                    <div class="setting-title">1. 問題形式を選択</div>
+                    <div class="option-pills-grid" id="training-type-pills">
+                        <div class="pill-btn active" onclick="selectTrainingType('all', this)">🧩 すべてミックス</div>
+                        <div class="pill-btn" onclick="selectTrainingType('assemble', this)">🔤 ハングル組み立て</div>
+                        <div class="pill-btn" onclick="selectTrainingType('jp2kr', this)">🇰🇷 ハングル選択</div>
+                        <div class="pill-btn" onclick="selectTrainingType('kr2jp', this)">🇯🇵 日本語名選択</div>
+                    </div>
+                </div>
+
+                <!-- Scope Selection -->
+                <div class="setting-group">
+                    <div class="setting-title">2. 対象キャラを選択</div>
+                    <div class="option-pills-grid" id="training-faction-pills">
+                        <div class="pill-btn active" onclick="selectTrainingFaction('All', this)">⭐ 全日本実装 (75)</div>
+                        <div class="pill-btn" onclick="selectTrainingFaction('妖精', this)">🧚 妖精</div>
+                        <div class="pill-btn" onclick="selectTrainingFaction('獣人', this)">🐾 獣人</div>
+                        <div class="pill-btn" onclick="selectTrainingFaction('魔女', this)">🧹 魔女</div>
+                        <div class="pill-btn" onclick="selectTrainingFaction('エルフ', this)">🏹 エルフ</div>
+                        <div class="pill-btn" onclick="selectTrainingFaction('幽霊', this)">👻 幽霊</div>
+                        <div class="pill-btn" onclick="selectTrainingFaction('龍族', this)">🐉 龍族</div>
+                    </div>
+                </div>
+
+                <button class="big-btn" style="margin-top: 10px; font-size: 1.2rem; padding: 16px;" onclick="startCustomTraining()">🏋️ トレーニング開始 (10問)</button>
+            </div>
+        </div>
+
+        <!-- VIEW 3: ROSTER / DICTIONARY VIEW -->
+        <div class="view-panel" id="view-roster">
+            <div class="roster-search-bar">
+                <input type="text" class="search-input" id="roster-search" placeholder="キャラ名（ハングル・日本語）で検索..." oninput="filterRoster()">
+            </div>
+            <div class="faction-filter" id="faction-filter-list">
+                <!-- Filter buttons generated dynamically -->
+            </div>
+            <div class="roster-grid" id="roster-grid-container">
+                <!-- Roster cards generated dynamically -->
+            </div>
+        </div>
+
+        <!-- VIEW 4: FLASHCARD REVIEW VIEW -->
+        <div class="view-panel" id="view-flashcard">
+            <div class="flashcard-container">
+                <h2>🎴 フラッシュカード学習</h2>
+                <p style="color: var(--gray-text); margin-bottom: 16px;">カードをタップして日本語名と顔画像を確認！（日本実装75キャラ）</p>
+                <div class="card-flip-box" id="flashcard-box" onclick="flipFlashcard()">
+                    <div class="card-flip-kr" id="card-kr">에르핀</div>
+                    <img id="card-img" class="card-flip-avatar" src="" alt="">
+                    <div class="card-flip-jp" id="card-jp">エルフィン</div>
+                    <div style="font-size: 0.85rem; color: var(--gray-text); margin-top: 4px;" id="card-faction">所属: 妖精</div>
+                    <div class="card-tap-hint" id="card-tap-hint">👆 タップして日本語名と顔画像を見る</div>
+                </div>
+
+                <div style="display: flex; gap: 10px; justify-content: center;">
+                    <button class="big-btn secondary" onclick="speakCurrentCard()">🔊 発音を聴く</button>
+                    <button class="big-btn" onclick="nextFlashcard()">つぎのカード ➡</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW 5: SPEED MATCH GAME -->
+        <div class="view-panel" id="view-speed">
+            <div class="match-game-container">
+                <h2>⚔️ スピードペアマッチ</h2>
+                <p style="color: var(--gray-text); margin-top: 4px;">左のハングルと右の日本語名を正しくペア合わせ！（日本実装75キャラ）</p>
+
+                <div class="match-timer-bar">
+                    <div class="match-timer-fill" id="speed-timer"></div>
+                </div>
+
+                <div style="font-weight: 800; font-size: 1.2rem;" id="speed-score">Score: 0</div>
+
+                <div class="match-columns-grid" id="speed-match-grid">
+                    <!-- Dynamic Left & Right Columns -->
+                </div>
+
+                <button class="big-btn" style="margin-top: 20px;" onclick="startSpeedGame()">ゲームスタート！</button>
+            </div>
+        </div>
+    </main>
+
+    <!-- App Footer Credits -->
+    <footer class="app-footer">
+        Trickcal copyrighted by EPIDGames, Trickcal Apostle Viewer by izso
+    </footer>
+
+    <!-- LESSON SCREEN OVERLAY -->
+    <div class="lesson-overlay" id="lesson-overlay">
+        <div class="lesson-header">
+            <div class="close-btn" onclick="exitLesson()">✕</div>
+            <div class="progress-bar-outer">
+                <div class="progress-bar-inner" id="lesson-progress"></div>
+            </div>
+        </div>
+
+        <div class="lesson-content" id="lesson-content">
+            <!-- Dynamic Question Content -->
+        </div>
+
+        <!-- Feedback Bottom Sheet -->
+        <div class="feedback-sheet" id="feedback-sheet">
+            <div class="feedback-title" id="feedback-title">✓ 正解！</div>
+            <div class="feedback-body" id="feedback-body">素晴らしい！</div>
+            <button class="big-btn" id="feedback-btn" onclick="nextQuestion()" style="align-self: flex-end;">つぎへ</button>
+        </div>
+
+        <div class="lesson-footer" id="lesson-footer">
+            <button class="big-btn" style="width: 100%;" id="check-ans-btn" onclick="checkAnswer()">回答をチェック</button>
+        </div>
+    </div>
+
+    <!-- Web Audio Synthesizer & Main Script -->
+    <script>
+        // --- COMPLETE 114 TRICKCAL CHARACTERS DATASET ---
+        const DEFAULT_CHARACTERS = [
+    {
+        "id": 1,
+        "key": "Alice",
+        "kr": "앨리스",
+        "jp": "アリス",
+        "faction": "幽霊",
+        "jpReleased": true,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Alice.webp"
+    },
+    {
+        "id": 2,
+        "key": "Allet",
+        "kr": "알레트",
+        "jp": "アレット",
+        "faction": "エルフ",
+        "jpReleased": true,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Allet.webp"
+    },
+    {
+        "id": 3,
+        "key": "Amelia",
+        "kr": "아멜리아",
+        "jp": "アメリア",
+        "faction": "エルフ",
+        "jpReleased": true,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Amelia.webp"
+    },
+    {
+        "id": 4,
+        "key": "Aragnia",
+        "kr": "아라그니아",
+        "jp": "Aragnia",
+        "faction": "龍族",
+        "jpReleased": false,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Aragnia.webp"
+    },
+    {
+        "id": 5,
+        "key": "Arco",
+        "kr": "아르코",
+        "jp": "Arco",
+        "faction": "神徒",
+        "jpReleased": false,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Arco.webp"
+    },
+    {
+        "id": 6,
+        "key": "Arnet",
+        "kr": "아네트",
+        "jp": "Arnet",
+        "faction": "龍族",
+        "jpReleased": false,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Arnet.webp"
+    },
+    {
+        "id": 7,
+        "key": "Asana",
+        "kr": "아사나",
+        "jp": "Asana",
+        "faction": "魔女",
+        "jpReleased": false,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Asana.webp"
+    },
+    {
+        "id": 8,
+        "key": "Ashur",
+        "kr": "에슈르",
+        "jp": "エシュール",
+        "faction": "妖精",
+        "jpReleased": true,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Ashur.webp"
+    },
+    {
+        "id": 9,
+        "key": "Aya",
+        "kr": "아야",
+        "jp": "アヤ",
+        "faction": "魔女",
+        "jpReleased": true,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Aya.webp"
+    },
+    {
+        "id": 10,
+        "key": "Ayla",
+        "kr": "아일라",
+        "jp": "Ayla",
+        "faction": "神徒",
+        "jpReleased": false,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Ayla.webp"
+    },
+    {
+        "id": 11,
+        "key": "Bana",
+        "kr": "바나",
+        "jp": "Bana",
+        "faction": "獣人",
+        "jpReleased": false,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Bana.webp"
+    },
+    {
+        "id": 12,
+        "key": "Barie",
+        "kr": "바리에",
+        "jp": "Barie",
+        "faction": "魔女",
+        "jpReleased": false,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Barie.webp"
+    },
+    {
+        "id": 13,
+        "key": "Barong",
+        "kr": "바롱",
+        "jp": "バロン",
+        "faction": "幽霊",
+        "jpReleased": true,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Barong.webp"
+    },
+    {
+        "id": 14,
+        "key": "Belita",
+        "kr": "벨리타",
+        "jp": "ベリータ",
+        "faction": "魔女",
+        "jpReleased": true,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Belita.webp"
+    },
+    {
+        "id": 15,
+        "key": "Beni",
+        "kr": "베니",
+        "jp": "ベニー",
+        "faction": "獣人",
+        "jpReleased": true,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Beni.webp"
+    },
+    {
+        "id": 16,
+        "key": "BigWood",
+        "kr": "빅우드",
+        "jp": "ビッグウッド",
+        "faction": "神徒",
+        "jpReleased": true,
+        "img": "https://trickcalviewer.pages.dev/image/heros/BigWood.webp"
+    },
+    {
+        "id": 17,
+        "key": "Blanchet",
+        "kr": "블랑셰",
+        "jp": "ブランセ",
+        "faction": "神徒",
+        "jpReleased": true,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Blanchet.webp"
+    },
+    {
+        "id": 18,
+        "key": "Butter",
+        "kr": "버터",
+        "jp": "バター",
+        "faction": "獣人",
+        "jpReleased": true,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Butter.webp"
+    },
+    {
+        "id": 19,
+        "key": "Canna",
+        "kr": "칸나",
+        "jp": "カンナ",
+        "faction": "エルフ",
+        "jpReleased": true,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Canna.webp"
+    },
+    {
+        "id": 20,
+        "key": "Canta",
+        "kr": "칸타",
+        "jp": "Canta",
+        "faction": "妖精",
+        "jpReleased": false,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Canta.webp"
+    },
+    {
+        "id": 21,
+        "key": "Carren",
+        "kr": "카렌",
+        "jp": "カレン",
+        "faction": "妖精",
+        "jpReleased": true,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Carren.webp"
+    },
+    {
+        "id": 22,
+        "key": "Chloe",
+        "kr": "클로에",
+        "jp": "クロエ",
+        "faction": "妖精",
+        "jpReleased": true,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Chloe.webp"
+    },
+    {
+        "id": 23,
+        "key": "Chopi",
+        "kr": "쵸피",
+        "jp": "チョッピー",
+        "faction": "獣人",
+        "jpReleased": true,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Chopi.webp"
+    },
+    {
+        "id": 24,
+        "key": "Cuee",
+        "kr": "큐이",
+        "jp": "キュウイ",
+        "faction": "妖精",
+        "jpReleased": true,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Cuee.webp"
+    },
+    {
+        "id": 25,
+        "key": "Daya",
+        "kr": "다야",
+        "jp": "ダーヤ",
+        "faction": "龍族",
+        "jpReleased": true,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Daya.webp"
+    },
+    {
+        "id": 26,
+        "key": "Delia",
+        "kr": "델리아",
+        "jp": "Delia",
+        "faction": "獣人",
+        "jpReleased": false,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Delia.webp"
+    },
+    {
+        "id": 27,
+        "key": "Diana",
+        "kr": "디아나",
+        "jp": "ディアナ",
+        "faction": "獣人",
+        "jpReleased": true,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Diana.webp"
+    },
+    {
+        "id": 28,
+        "key": "Ed",
+        "kr": "이드",
+        "jp": "イード",
+        "faction": "エルフ",
+        "jpReleased": true,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Ed.webp"
+    },
+    {
+        "id": 29,
+        "key": "Eisia",
+        "kr": "아이시아",
+        "jp": "Eisia",
+        "faction": "エルフ",
+        "jpReleased": false,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Eisia.webp"
+    },
+    {
+        "id": 30,
+        "key": "Elena",
+        "kr": "엘레나",
+        "jp": "エレナ",
+        "faction": "エルフ",
+        "jpReleased": true,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Elena.webp"
+    },
+    {
+        "id": 31,
+        "key": "Epica",
+        "kr": "에피카",
+        "jp": "エピカ",
+        "faction": "獣人",
+        "jpReleased": true,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Epica.webp"
+    },
+    {
+        "id": 32,
+        "key": "Erpin",
+        "kr": "에르핀",
+        "jp": "エルフィン",
+        "faction": "妖精",
+        "jpReleased": true,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Erpin.webp"
+    },
+    {
+        "id": 33,
+        "key": "Espi",
+        "kr": "에스피",
+        "jp": "エスピー",
+        "faction": "幽霊",
+        "jpReleased": true,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Espi.webp"
+    },
+    {
+        "id": 34,
+        "key": "Festa",
+        "kr": "페스타",
+        "jp": "フェスタ",
+        "faction": "エルフ",
+        "jpReleased": true,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Festa.webp"
+    },
+    {
+        "id": 35,
+        "key": "Fricle",
+        "kr": "프리클",
+        "jp": "フリックル",
+        "faction": "魔女",
+        "jpReleased": true,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Fricle.webp"
+    },
+    {
+        "id": 36,
+        "key": "Gabia",
+        "kr": "가비아",
+        "jp": "ガヴィア",
+        "faction": "神徒",
+        "jpReleased": true,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Gabia.webp"
+    },
+    {
+        "id": 37,
+        "key": "Guin",
+        "kr": "그윈",
+        "jp": "Guin",
+        "faction": "獣人",
+        "jpReleased": false,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Guin.webp"
+    },
+    {
+        "id": 38,
+        "key": "Haley",
+        "kr": "헤일리",
+        "jp": "ヘイリー",
+        "faction": "エルフ",
+        "jpReleased": true,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Haley.webp"
+    },
+    {
+        "id": 39,
+        "key": "Heidi",
+        "kr": "하이디",
+        "jp": "Heidi",
+        "faction": "エルフ",
+        "jpReleased": false,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Heidi.webp"
+    },
+    {
+        "id": 40,
+        "key": "Hilde",
+        "kr": "힐데",
+        "jp": "ヒルデ",
+        "faction": "エルフ",
+        "jpReleased": true,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Hilde.webp"
+    },
+    {
+        "id": 41,
+        "key": "Ifrit",
+        "kr": "이프리트",
+        "jp": "イフリート",
+        "faction": "神徒",
+        "jpReleased": true,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Ifrit.webp"
+    },
+    {
+        "id": 42,
+        "key": "Inkle",
+        "kr": "잉클",
+        "jp": "Inkle",
+        "faction": "神徒",
+        "jpReleased": false,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Inkle.webp"
+    },
+    {
+        "id": 43,
+        "key": "Jade",
+        "kr": "제이드",
+        "jp": "ジェイド",
+        "faction": "龍族",
+        "jpReleased": true,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Jade.webp"
+    },
+    {
+        "id": 44,
+        "key": "Joanne",
+        "kr": "죠안",
+        "jp": "Joanne",
+        "faction": "妖精",
+        "jpReleased": false,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Joanne.webp"
+    },
+    {
+        "id": 45,
+        "key": "Jubee",
+        "kr": "쥬비",
+        "jp": "ジュビー",
+        "faction": "神徒",
+        "jpReleased": true,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Jubee.webp"
+    },
+    {
+        "id": 46,
+        "key": "Kathy",
+        "kr": "캐시",
+        "jp": "Kathy",
+        "faction": "エルフ",
+        "jpReleased": false,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Kathy.webp"
+    },
+    {
+        "id": 47,
+        "key": "Kidian",
+        "kr": "키디언",
+        "jp": "ギデオン",
+        "faction": "龍族",
+        "jpReleased": true,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Kidian.webp"
+    },
+    {
+        "id": 48,
+        "key": "Kishya",
+        "kr": "키샤",
+        "jp": "Kishya",
+        "faction": "幽霊",
+        "jpReleased": false,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Kishya.webp"
+    },
+    {
+        "id": 49,
+        "key": "Kommy",
+        "kr": "코미",
+        "jp": "コミー",
+        "faction": "獣人",
+        "jpReleased": true,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Kommy.webp"
+    },
+    {
+        "id": 50,
+        "key": "Kyarot",
+        "kr": "캬롯",
+        "jp": "キャロット",
+        "faction": "妖精",
+        "jpReleased": true,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Kyarot.webp"
+    },
+    {
+        "id": 51,
+        "key": "Laika",
+        "kr": "라이카",
+        "jp": "Laika",
+        "faction": "神徒",
+        "jpReleased": false,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Laika.webp"
+    },
+    {
+        "id": 52,
+        "key": "Lazy",
+        "kr": "레이지",
+        "jp": "レイジー",
+        "faction": "エルフ",
+        "jpReleased": true,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Lazy.webp"
+    },
+    {
+        "id": 53,
+        "key": "Leets",
+        "kr": "리츠",
+        "jp": "リッツ",
+        "faction": "龍族",
+        "jpReleased": true,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Leets.webp"
+    },
+    {
+        "id": 54,
+        "key": "Lethe",
+        "kr": "레테",
+        "jp": "Lethe",
+        "faction": "幽霊",
+        "jpReleased": false,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Lethe.webp"
+    },
+    {
+        "id": 55,
+        "key": "Levi",
+        "kr": "레비",
+        "jp": "レヴィ",
+        "faction": "魔女",
+        "jpReleased": true,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Levi.webp"
+    },
+    {
+        "id": 56,
+        "key": "Lion",
+        "kr": "리온",
+        "jp": "Lion",
+        "faction": "獣人",
+        "jpReleased": false,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Lion.webp"
+    },
+    {
+        "id": 57,
+        "key": "MaestroMK2",
+        "kr": "마에스트로 2호",
+        "jp": "マエストロMK2",
+        "faction": "エルフ",
+        "jpReleased": true,
+        "img": "https://trickcalviewer.pages.dev/image/heros/MaestroMK2.webp"
+    },
+    {
+        "id": 58,
+        "key": "Mago",
+        "kr": "마고",
+        "jp": "マーゴ",
+        "faction": "獣人",
+        "jpReleased": true,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Mago.webp"
+    },
+    {
+        "id": 59,
+        "key": "Maison",
+        "kr": "메죵",
+        "jp": "メゾン",
+        "faction": "幽霊",
+        "jpReleased": true,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Maison.webp"
+    },
+    {
+        "id": 60,
+        "key": "Makasha",
+        "kr": "마카샤",
+        "jp": "Makasha",
+        "faction": "魔女",
+        "jpReleased": false,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Makasha.webp"
+    },
+    {
+        "id": 61,
+        "key": "Marie",
+        "kr": "마리",
+        "jp": "マリー",
+        "faction": "妖精",
+        "jpReleased": true,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Marie.webp"
+    },
+    {
+        "id": 62,
+        "key": "Mayo",
+        "kr": "마요",
+        "jp": "マヨ",
+        "faction": "妖精",
+        "jpReleased": true,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Mayo.webp"
+    },
+    {
+        "id": 63,
+        "key": "Meluna",
+        "kr": "멜루나",
+        "jp": "メロナ",
+        "faction": "神徒",
+        "jpReleased": true,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Meluna.webp"
+    },
+    {
+        "id": 64,
+        "key": "Miro",
+        "kr": "미로",
+        "jp": "Miro",
+        "faction": "神徒",
+        "jpReleased": false,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Miro.webp"
+    },
+    {
+        "id": 65,
+        "key": "Momo",
+        "kr": "모모",
+        "jp": "モモ",
+        "faction": "獣人",
+        "jpReleased": true,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Momo.webp"
+    },
+    {
+        "id": 66,
+        "key": "Mute",
+        "kr": "뮤트",
+        "jp": "Mute",
+        "faction": "神徒",
+        "jpReleased": false,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Mute.webp"
+    },
+    {
+        "id": 67,
+        "key": "Mynx",
+        "kr": "밍스",
+        "jp": "ミンス",
+        "faction": "獣人",
+        "jpReleased": true,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Mynx.webp"
+    },
+    {
+        "id": 68,
+        "key": "Naia",
+        "kr": "나이아",
+        "jp": "ナイア",
+        "faction": "神徒",
+        "jpReleased": true,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Naia.webp"
+    },
+    {
+        "id": 69,
+        "key": "Ner",
+        "kr": "네르",
+        "jp": "ネル",
+        "faction": "妖精",
+        "jpReleased": true,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Ner.webp"
+    },
+    {
+        "id": 70,
+        "key": "Neti",
+        "kr": "네티",
+        "jp": "Neti",
+        "faction": "龍族",
+        "jpReleased": false,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Neti.webp"
+    },
+    {
+        "id": 71,
+        "key": "Nicole",
+        "kr": "니콜",
+        "jp": "Nicole",
+        "faction": "神徒",
+        "jpReleased": false,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Nicole.webp"
+    },
+    {
+        "id": 72,
+        "key": "Opal",
+        "kr": "오팔",
+        "jp": "Opal",
+        "faction": "龍族",
+        "jpReleased": false,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Opal.webp"
+    },
+    {
+        "id": 73,
+        "key": "Orr",
+        "kr": "오르",
+        "jp": "Orr",
+        "faction": "エルフ",
+        "jpReleased": false,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Orr.webp"
+    },
+    {
+        "id": 74,
+        "key": "Patula",
+        "kr": "파트라",
+        "jp": "パトラ",
+        "faction": "妖精",
+        "jpReleased": true,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Patula.webp"
+    },
+    {
+        "id": 75,
+        "key": "Picora",
+        "kr": "피코라",
+        "jp": "ピコラ",
+        "faction": "魔女",
+        "jpReleased": true,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Picora.webp"
+    },
+    {
+        "id": 76,
+        "key": "Pira",
+        "kr": "피라",
+        "jp": "Pira",
+        "faction": "龍族",
+        "jpReleased": false,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Pira.webp"
+    },
+    {
+        "id": 77,
+        "key": "Polan",
+        "kr": "폴랑",
+        "jp": "Polan",
+        "faction": "妖精",
+        "jpReleased": false,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Polan.webp"
+    },
+    {
+        "id": 78,
+        "key": "Posher",
+        "kr": "포셔",
+        "jp": "ポーシャー",
+        "faction": "魔女",
+        "jpReleased": true,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Posher.webp"
+    },
+    {
+        "id": 79,
+        "key": "Ran",
+        "kr": "란",
+        "jp": "Ran",
+        "faction": "獣人",
+        "jpReleased": false,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Ran.webp"
+    },
+    {
+        "id": 80,
+        "key": "RenewaAwaken",
+        "kr": "리뉴아",
+        "jp": "リニュア",
+        "faction": "エルフ",
+        "jpReleased": true,
+        "img": "https://trickcalviewer.pages.dev/image/heros/RenewaAwaken.webp"
+    },
+    {
+        "id": 81,
+        "key": "Ricota",
+        "kr": "리코타",
+        "jp": "Ricota",
+        "faction": "妖精",
+        "jpReleased": false,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Ricota.webp"
+    },
+    {
+        "id": 82,
+        "key": "Rim",
+        "kr": "림",
+        "jp": "リム",
+        "faction": "幽霊",
+        "jpReleased": true,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Rim.webp"
+    },
+    {
+        "id": 83,
+        "key": "Risty",
+        "kr": "리스티",
+        "jp": "リスティ",
+        "faction": "エルフ",
+        "jpReleased": true,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Risty.webp"
+    },
+    {
+        "id": 84,
+        "key": "Rohne",
+        "kr": "로네",
+        "jp": "ローネ",
+        "faction": "エルフ",
+        "jpReleased": true,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Rohne.webp"
+    },
+    {
+        "id": 85,
+        "key": "Rollett",
+        "kr": "롤렛",
+        "jp": "ロレット",
+        "faction": "魔女",
+        "jpReleased": true,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Rollett.webp"
+    },
+    {
+        "id": 86,
+        "key": "Rude",
+        "kr": "루드",
+        "jp": "ルード",
+        "faction": "龍族",
+        "jpReleased": true,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Rude.webp"
+    },
+    {
+        "id": 87,
+        "key": "Rufo",
+        "kr": "루포",
+        "jp": "ルポ",
+        "faction": "獣人",
+        "jpReleased": true,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Rufo.webp"
+    },
+    {
+        "id": 88,
+        "key": "Sari",
+        "kr": "사리",
+        "jp": "サリー",
+        "faction": "幽霊",
+        "jpReleased": true,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Sari.webp"
+    },
+    {
+        "id": 89,
+        "key": "Scizor",
+        "kr": "시저",
+        "jp": "Scizor",
+        "faction": "神徒",
+        "jpReleased": false,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Scizor.webp"
+    },
+    {
+        "id": 90,
+        "key": "Selline",
+        "kr": "셀리네",
+        "jp": "セリーネ",
+        "faction": "幽霊",
+        "jpReleased": true,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Selline.webp"
+    },
+    {
+        "id": 91,
+        "key": "Silvia",
+        "kr": "실비아",
+        "jp": "Silvia",
+        "faction": "龍族",
+        "jpReleased": false,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Silvia.webp"
+    },
+    {
+        "id": 92,
+        "key": "Shady",
+        "kr": "셰이디",
+        "jp": "シェイディ",
+        "faction": "幽霊",
+        "jpReleased": true,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Shady.webp"
+    },
+    {
+        "id": 93,
+        "key": "Shasha",
+        "kr": "샤샤",
+        "jp": "Shasha",
+        "faction": "妖精",
+        "jpReleased": false,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Shasha.webp"
+    },
+    {
+        "id": 94,
+        "key": "Sherum",
+        "kr": "셰럼",
+        "jp": "Sherum",
+        "faction": "魔女",
+        "jpReleased": false,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Sherum.webp"
+    },
+    {
+        "id": 95,
+        "key": "Shoupan",
+        "kr": "슈팡",
+        "jp": "シュパン",
+        "faction": "妖精",
+        "jpReleased": true,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Shoupan.webp"
+    },
+    {
+        "id": 96,
+        "key": "Silphir",
+        "kr": "실피르",
+        "jp": "シルフィール",
+        "faction": "龍族",
+        "jpReleased": true,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Silphir.webp"
+    },
+    {
+        "id": 97,
+        "key": "Sist",
+        "kr": "시스트",
+        "jp": "シスト",
+        "faction": "龍族",
+        "jpReleased": true,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Sist.webp"
+    },
+    {
+        "id": 98,
+        "key": "Skea",
+        "kr": "스키아",
+        "jp": "Skea",
+        "faction": "妖精",
+        "jpReleased": false,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Skea.webp"
+    },
+    {
+        "id": 99,
+        "key": "Snorky",
+        "kr": "스노키",
+        "jp": "スノキー",
+        "faction": "魔女",
+        "jpReleased": true,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Snorky.webp"
+    },
+    {
+        "id": 100,
+        "key": "Sparrot",
+        "kr": "스패럿",
+        "jp": "Sparrot",
+        "faction": "獣人",
+        "jpReleased": false,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Sparrot.webp"
+    },
+    {
+        "id": 101,
+        "key": "Speaki",
+        "kr": "스피키",
+        "jp": "スピッキー",
+        "faction": "幽霊",
+        "jpReleased": true,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Speaki.webp"
+    },
+    {
+        "id": 102,
+        "key": "Suro",
+        "kr": "슈로",
+        "jp": "Suro",
+        "faction": "獣人",
+        "jpReleased": false,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Suro.webp"
+    },
+    {
+        "id": 103,
+        "key": "Sylla",
+        "kr": "실라",
+        "jp": "シーラ",
+        "faction": "神徒",
+        "jpReleased": true,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Sylla.webp"
+    },
+    {
+        "id": 104,
+        "key": "Taida",
+        "kr": "타이다",
+        "jp": "タイダー",
+        "faction": "エルフ",
+        "jpReleased": true,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Taida.webp"
+    },
+    {
+        "id": 105,
+        "key": "Tig",
+        "kr": "티그",
+        "jp": "ティグ",
+        "faction": "獣人",
+        "jpReleased": true,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Tig.webp"
+    },
+    {
+        "id": 106,
+        "key": "Ui",
+        "kr": "우이",
+        "jp": "ウイ",
+        "faction": "神徒",
+        "jpReleased": true,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Ui.webp"
+    },
+    {
+        "id": 107,
+        "key": "Uros",
+        "kr": "우로스",
+        "jp": "Uros",
+        "faction": "獣人",
+        "jpReleased": false,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Uros.webp"
+    },
+    {
+        "id": 108,
+        "key": "Vela",
+        "kr": "벨라",
+        "jp": "Vela",
+        "faction": "幽霊",
+        "jpReleased": false,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Vela.webp"
+    },
+    {
+        "id": 109,
+        "key": "Velvet",
+        "kr": "벨벳",
+        "jp": "ベルベット",
+        "faction": "魔女",
+        "jpReleased": true,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Velvet.webp"
+    },
+    {
+        "id": 110,
+        "key": "Veroo",
+        "kr": "베루",
+        "jp": "ベル",
+        "faction": "幽霊",
+        "jpReleased": true,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Veroo.webp"
+    },
+    {
+        "id": 111,
+        "key": "Vivi",
+        "kr": "비비",
+        "jp": "ヴィヴィ",
+        "faction": "龍族",
+        "jpReleased": true,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Vivi.webp"
+    },
+    {
+        "id": 112,
+        "key": "xXionx",
+        "kr": "시온 더 다크불릿",
+        "jp": "シオン・ザ・DB",
+        "faction": "幽霊",
+        "jpReleased": true,
+        "img": "https://trickcalviewer.pages.dev/image/heros/xXionx.webp"
+    },
+    {
+        "id": 113,
+        "key": "Yomi",
+        "kr": "요미",
+        "jp": "ヨミ",
+        "faction": "神徒",
+        "jpReleased": true,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Yomi.webp"
+    },
+    {
+        "id": 114,
+        "key": "Yumimi",
+        "kr": "유미미",
+        "jp": "ユミミ",
+        "faction": "獣人",
+        "jpReleased": true,
+        "img": "https://trickcalviewer.pages.dev/image/heros/Yumimi.webp"
+    }
+];
+
+        // --- APP STATE ---
+        let state = {
+            completedNodes: [],
+            characters: [...DEFAULT_CHARACTERS],
+            activeFaction: 'All',
+            trainingType: 'all',
+            trainingFaction: 'All'
+        };
+
+        // Helper: Get JP-released characters for gameplay (Quizzes, Speed Match, Flashcards)
+        function getGamePool(faction = 'All') {
+            return state.characters.filter(c => {
+                const isRel = c.jpReleased;
+                const matchesFac = (faction === 'All' || c.faction === faction);
+                return isRel && matchesFac;
+            });
+        }
+
+        function getImgFallbackSvg(text) {
+            const char = text ? text[0] : '?';
+            return `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80"><circle cx="40" cy="40" r="40" fill="%2358cc02"/><text x="50%" y="58%" font-size="32" text-anchor="middle" fill="white" font-weight="bold" font-family="sans-serif">${char}</text></svg>`;
+        }
+
+        // --- AUDIO SYNTHESIZER ---
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playSound(type) {
+            try {
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                const now = audioCtx.currentTime;
+                if (type === 'correct') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(523.25, now);
+                    osc.frequency.setValueAtTime(659.25, now + 0.1);
+                    gain.gain.setValueAtTime(0.3, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                    osc.start(now);
+                    osc.stop(now + 0.3);
+                } else if (type === 'wrong') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(180, now);
+                    osc.frequency.setValueAtTime(130, now + 0.15);
+                    gain.gain.setValueAtTime(0.3, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+                    osc.start(now);
+                    osc.stop(now + 0.4);
+                } else if (type === 'click') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(400, now);
+                    gain.gain.setValueAtTime(0.1, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+                    osc.start(now);
+                    osc.stop(now + 0.05);
+                }
+            } catch(e) {}
+        }
+
+        // --- KOREAN TTS ---
+        function speakKorean(text, rate = 0.9) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const utter = new SpeechSynthesisUtterance(text);
+                utter.lang = 'ko-KR';
+                utter.rate = rate;
+                window.speechSynthesis.speak(utter);
+            }
+        }
+
+        // --- LOCAL STORAGE PERSISTENCE ---
+        function loadState() {
+            const saved = localStorage.getItem('trickcal_duo_state_v9');
+            if (saved) {
+                state = JSON.parse(saved);
+                state.characters = [...DEFAULT_CHARACTERS];
+            } else {
+                state.characters = [...DEFAULT_CHARACTERS];
+            }
+        }
+
+        function saveState() {
+            localStorage.setItem('trickcal_duo_state_v9', JSON.stringify(state));
+        }
+
+        // --- VIEW SWITCHING ---
+        function showView(viewName) {
+            playSound('click');
+            document.querySelectorAll('.view-panel').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'));
+
+            document.getElementById(`view-${viewName}`).classList.add('active');
+            document.getElementById(`tab-${viewName}`).classList.add('active');
+
+            if (viewName === 'course') renderCoursePath();
+            if (viewName === 'roster') renderRoster();
+            if (viewName === 'flashcard') initFlashcard();
+            if (viewName === 'speed') renderSpeedGrid();
+        }
+
+        // --- TRAINING MODE CONTROLS ---
+        function selectTrainingType(type, el) {
+            playSound('click');
+            document.querySelectorAll('#training-type-pills .pill-btn').forEach(btn => btn.classList.remove('active'));
+            el.classList.add('active');
+            state.trainingType = type;
+        }
+
+        function selectTrainingFaction(faction, el) {
+            playSound('click');
+            document.querySelectorAll('#training-faction-pills .pill-btn').forEach(btn => btn.classList.remove('active'));
+            el.classList.add('active');
+            state.trainingFaction = faction;
+        }
+
+        function startCustomTraining() {
+            playSound('click');
+
+            let pool = getGamePool(state.trainingFaction);
+            if (pool.length < 4) pool = getGamePool('All');
+
+            const questions = [];
+            const qCount = 10;
+
+            for (let i = 0; i < qCount; i++) {
+                const target = pool[Math.floor(Math.random() * pool.length)];
+                let type = state.trainingType;
+
+                if (type === 'all') {
+                    if (i % 3 === 0) type = 'assemble';
+                    else if (i % 3 === 1) type = 'jp2kr';
+                    else type = 'kr2jp';
+                }
+
+                questions.push({ target, type, pool });
+            }
+
+            currentLesson = {
+                unit: { id: 99, title: "🏋️ トレーニングモード", faction: state.trainingFaction },
+                questions,
+                qIndex: 0,
+                correctCount: 0,
+                selectedOption: null,
+                assemblySlots: [],
+                assemblyPool: []
+            };
+
+            document.getElementById('lesson-overlay').classList.add('active');
+            renderQuestion();
+        }
+
+        // --- COURSE PATH GENERATION ---
+        const UNITS = [
+            { id: 1, title: "ユニット 1: 妖精王国", icon: "🧚", faction: "妖精" },
+            { id: 2, title: "ユニット 2: 獣人連合", icon: "🐾", faction: "獣人" },
+            { id: 3, title: "ユニット 3: 魔女王国", icon: "🧹", faction: "魔女" },
+            { id: 4, title: "ユニット 4: エルフ自治領", icon: "🏹", faction: "エルフ" },
+            { id: 5, title: "ユニット 5: 幽霊屋敷", icon: "👻", faction: "幽霊" },
+            { id: 6, title: "ユニット 6: 龍族 & 精霊", icon: "🐉", faction: "龍族" },
+            { id: 7, title: "ユニット 7: 全日本実装マスター (75キャラ)", icon: "⭐", faction: "All" }
+        ];
+
+        function renderCoursePath() {
+            const container = document.getElementById('unit-sections-container');
+            container.innerHTML = '';
+
+            UNITS.forEach((unit, idx) => {
+                const section = document.createElement('div');
+                section.className = 'unit-section';
+
+                const isUnlocked = idx === 0 || state.completedNodes.includes(UNITS[idx - 1].id);
+                const isCompleted = state.completedNodes.includes(unit.id);
+
+                section.innerHTML = `
+                    <div class="unit-header" style="${!isUnlocked ? 'background:#a0a0a0; box-shadow:0 4px 0 #787878;' : ''}">
+                        <div>
+                            <div class="unit-title">${unit.title}</div>
+                            <div class="unit-subtitle">${isUnlocked ? 'ハングル組み立て・4択クイズでマスターしよう！' : '前のユニットをクリアすると解放！'}</div>
+                        </div>
+                        <div style="font-size: 1.8rem;">${unit.icon}</div>
+                    </div>
+                    <div class="path-container">
+                        <div class="path-node ${isCompleted ? 'completed' : ''} ${!isUnlocked ? 'locked' : ''}" onclick="${isUnlocked ? `startLesson(${unit.id})` : ''}">
+                            <span>${isCompleted ? '👑' : unit.icon}</span>
+                            <div class="node-label">${unit.faction}クイズ</div>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(section);
+            });
+        }
+
+        // --- ROSTER / DICTIONARY VIEW ---
+        function renderRoster() {
+            const factionList = document.getElementById('faction-filter-list');
+            const factions = ['All', '日本実装のみ', '未実装のみ', '妖精', '獣人', '魔女', 'エルフ', '幽霊', '龍族', '神徒'];
+            factionList.innerHTML = factions.map(f => `
+                <button class="filter-btn ${state.activeFaction === f ? 'active' : ''}" onclick="setFactionFilter('${f}')">${f}</button>
+            `).join('');
+
+            filterRoster();
+        }
+
+        function setFactionFilter(f) {
+            playSound('click');
+            state.activeFaction = f;
+            renderRoster();
+        }
+
+        function filterRoster() {
+            const query = document.getElementById('roster-search').value.toLowerCase();
+            const grid = document.getElementById('roster-grid-container');
+
+            const filtered = state.characters.filter(c => {
+                let matchesFaction = true;
+                if (state.activeFaction === '日本実装のみ') matchesFaction = c.jpReleased;
+                else if (state.activeFaction === '未実装のみ') matchesFaction = !c.jpReleased;
+                else if (state.activeFaction !== 'All') matchesFaction = c.faction === state.activeFaction;
+
+                const matchesQuery = c.kr.toLowerCase().includes(query) || c.jp.toLowerCase().includes(query);
+                return matchesFaction && matchesQuery;
+            });
+
+            grid.innerHTML = filtered.map(c => `
+                <div class="char-card">
+                    <img class="char-avatar" src="${c.img}" alt="${c.kr}" onerror="this.onerror=null; this.src=getImgFallbackSvg('${c.kr}');" loading="lazy">
+                    <div>
+                        <div class="char-kr">${c.kr}</div>
+                        <div class="char-jp">${c.jp}</div>
+                    </div>
+                    <div class="badges-row">
+                        <span class="faction-badge">${c.faction}</span>
+                        ${!c.jpReleased ? '<span class="unreleased-badge">未実装</span>' : ''}
+                    </div>
+                    <div class="audio-btn-row">
+                        <button class="char-audio-btn" onclick="speakKorean('${c.kr}')">🔊 発音</button>
+                        <button class="char-audio-btn" style="background:#fff6e5; border-color:var(--yellow-dark); color:var(--yellow-dark);" onclick="speakKorean('${c.kr}', 0.6)">🐢 ゆっくり</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // --- FLASHCARD ENGINE ---
+        let flashIndex = 0;
+        function initFlashcard() {
+            flashIndex = 0;
+            showFlashcard();
+        }
+
+        function showFlashcard() {
+            const gamePool = getGamePool();
+            if (gamePool.length === 0) return;
+
+            const c = gamePool[flashIndex % gamePool.length];
+            const imgEl = document.getElementById('card-img');
+            imgEl.src = c.img;
+            imgEl.onerror = function() { this.onerror=null; this.src=getImgFallbackSvg(c.kr); };
+
+            document.getElementById('card-kr').innerText = c.kr;
+            document.getElementById('card-jp').innerText = c.jp;
+            document.getElementById('card-faction').innerText = `所属: ${c.faction}`;
+            
+            imgEl.style.display = 'none';
+            document.getElementById('card-jp').style.display = 'none';
+            document.getElementById('card-tap-hint').innerText = '👆 タップして日本語名と顔画像を見る';
+        }
+
+        function flipFlashcard() {
+            playSound('click');
+            const imgEl = document.getElementById('card-img');
+            const jpEl = document.getElementById('card-jp');
+            const hintEl = document.getElementById('card-tap-hint');
+
+            const isCurrentlyHidden = (jpEl.style.display === 'none');
+
+            if (isCurrentlyHidden) {
+                imgEl.style.display = 'block';
+                jpEl.style.display = 'block';
+                hintEl.innerText = '👆 もう一度タップして隠す';
+            } else {
+                imgEl.style.display = 'none';
+                jpEl.style.display = 'none';
+                hintEl.innerText = '👆 タップして日本語名と顔画像を見る';
+            }
+        }
+
+        function speakCurrentCard() {
+            const gamePool = getGamePool();
+            if (gamePool.length === 0) return;
+            const c = gamePool[flashIndex % gamePool.length];
+            speakKorean(c.kr);
+        }
+
+        function nextFlashcard() {
+            playSound('click');
+            flashIndex++;
+            showFlashcard();
+        }
+
+        // --- LESSON ENGINE ---
+        let currentLesson = {
+            unit: null,
+            questions: [],
+            qIndex: 0,
+            correctCount: 0,
+            selectedOption: null,
+            assemblySlots: [],
+            assemblyPool: []
+        };
+
+        function startLesson(unitId) {
+            playSound('click');
+
+            const unit = UNITS.find(u => u.id === unitId);
+            let pool = getGamePool(unit.faction);
+            if (pool.length < 4) pool = getGamePool('All');
+
+            const questions = [];
+            for (let i = 0; i < 5; i++) {
+                const target = pool[Math.floor(Math.random() * pool.length)];
+                let type;
+                if (i % 3 === 0) type = 'assemble'; // 日本語名 ➡ ハングル組み立て問題
+                else if (i % 3 === 1) type = 'jp2kr'; // 日本語名 ➡ ハングル4択問題
+                else type = 'kr2jp'; // ハングル ➡ 日本語名4択問題
+
+                questions.push({ target, type, pool });
+            }
+
+            currentLesson = {
+                unit,
+                questions,
+                qIndex: 0,
+                correctCount: 0,
+                selectedOption: null,
+                assemblySlots: [],
+                assemblyPool: []
+            };
+
+            document.getElementById('lesson-overlay').classList.add('active');
+            renderQuestion();
+        }
+
+        function renderQuestion() {
+            const q = currentLesson.questions[currentLesson.qIndex];
+            const content = document.getElementById('lesson-content');
+            const footer = document.getElementById('feedback-sheet');
+            footer.classList.remove('correct', 'incorrect');
+            footer.style.display = 'none';
+
+            const prog = ((currentLesson.qIndex) / currentLesson.questions.length) * 100;
+            document.getElementById('lesson-progress').style.width = `${prog}%`;
+
+            currentLesson.selectedOption = null;
+            currentLesson.assemblySlots = [];
+            currentLesson.assemblyPool = [];
+
+            const pool = getGamePool('All');
+            const distractors = pool.filter(c => c.id !== q.target.id);
+            distractors.sort(() => Math.random() - 0.5);
+
+            if (q.type === 'assemble') {
+                const targetSyllables = Array.from(q.target.kr);
+                
+                let distractorSyllables = [];
+                for (let d of distractors) {
+                    for (let s of Array.from(d.kr)) {
+                        if (!targetSyllables.includes(s) && !distractorSyllables.includes(s)) {
+                            distractorSyllables.push(s);
+                        }
+                        if (distractorSyllables.length >= 3) break;
+                    }
+                    if (distractorSyllables.length >= 3) break;
+                }
+
+                const poolChips = [...targetSyllables, ...distractorSyllables].map((s, idx) => ({
+                    id: idx,
+                    syllable: s,
+                    used: false
+                })).sort(() => Math.random() - 0.5);
+
+                currentLesson.assemblyPool = poolChips;
+
+                content.innerHTML = `
+                    <div class="q-prompt">「${q.target.jp}」のハングルを順番にタップして完成させよう！</div>
+                    <div class="q-card-main">
+                        <img class="q-target-avatar" src="${q.target.img}" onerror="this.onerror=null; this.src=getImgFallbackSvg('${q.target.kr}');" alt="${q.target.jp}">
+                        <div style="font-size: 2rem; font-weight: 900; color: var(--dark);">${q.target.jp}</div>
+                    </div>
+                    
+                    <!-- Assembly Slot Line -->
+                    <div class="assembly-slots-area" id="assembly-slots-area">
+                        <span style="color: var(--gray-text); font-size: 0.9rem;">ブロックをタップして並べる</span>
+                    </div>
+
+                    <!-- Syllable Pool -->
+                    <div class="assembly-pool-area" id="assembly-pool-area">
+                    </div>
+                `;
+
+                renderAssemblyState();
+
+            } else if (q.type === 'kr2jp') {
+                const choices = [q.target, distractors[0], distractors[1], distractors[2]].filter(Boolean).sort(() => Math.random() - 0.5);
+                content.innerHTML = `
+                    <div class="q-prompt">このキャラの日本語名は？</div>
+                    <div class="q-card-main">
+                        <img class="q-target-avatar" src="${q.target.img}" onerror="this.onerror=null; this.src=getImgFallbackSvg('${q.target.kr}');" alt="${q.target.kr}">
+                        <div class="q-target-kr">${q.target.kr}</div>
+                        <button class="q-tts-btn" onclick="speakKorean('${q.target.kr}')">🔊</button>
+                    </div>
+                    <div class="q-options-grid">
+                        ${choices.map(c => `
+                            <div class="option-card" onclick="selectOption(this, '${c.jp}')">${c.jp}</div>
+                        `).join('')}
+                    </div>
+                `;
+                speakKorean(q.target.kr);
+            } else if (q.type === 'jp2kr') {
+                const choices = [q.target, distractors[0], distractors[1], distractors[2]].filter(Boolean).sort(() => Math.random() - 0.5);
+                content.innerHTML = `
+                    <div class="q-prompt">日本語名「${q.target.jp}」のハングル表記は？</div>
+                    <div class="q-card-main">
+                        <img class="q-target-avatar" src="${q.target.img}" onerror="this.onerror=null; this.src=getImgFallbackSvg('${q.target.kr}');" alt="${q.target.jp}">
+                        <div style="font-size: 2rem; font-weight: 800;">${q.target.jp}</div>
+                    </div>
+                    <div class="q-options-grid">
+                        ${choices.map(c => `
+                            <div class="option-card" onclick="selectOption(this, '${c.kr}')">
+                                <span>${c.kr}</span>
+                                <button style="background:none; border:none; cursor:pointer;" onclick="event.stopPropagation(); speakKorean('${c.kr}')">🔊</button>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+        }
+
+        // --- ASSEMBLY LOGIC ---
+        function renderAssemblyState() {
+            const slotsArea = document.getElementById('assembly-slots-area');
+            const poolArea = document.getElementById('assembly-pool-area');
+            if (!slotsArea || !poolArea) return;
+
+            if (currentLesson.assemblySlots.length === 0) {
+                slotsArea.innerHTML = `<span style="color: var(--gray-text); font-size: 0.95rem;">文字ブロックをタップして並べる</span>`;
+            } else {
+                slotsArea.innerHTML = currentLesson.assemblySlots.map((chip, idx) => `
+                    <div class="assembly-chip" onclick="removeAssemblySlot(${idx})">${chip.syllable}</div>
+                `).join('');
+            }
+
+            poolArea.innerHTML = currentLesson.assemblyPool.map(chip => `
+                <div class="assembly-pool-chip ${chip.used ? 'used' : ''}" onclick="addAssemblySlot(${chip.id})">
+                    ${chip.syllable}
+                </div>
+            `).join('');
+        }
+
+        function addAssemblySlot(poolChipId) {
+            playSound('click');
+            const chip = currentLesson.assemblyPool.find(c => c.id === poolChipId);
+            if (!chip || chip.used) return;
+
+            chip.used = true;
+            currentLesson.assemblySlots.push(chip);
+            renderAssemblyState();
+        }
+
+        function removeAssemblySlot(slotIdx) {
+            playSound('click');
+            const removed = currentLesson.assemblySlots.splice(slotIdx, 1)[0];
+            if (removed) {
+                removed.used = false;
+            }
+            renderAssemblyState();
+        }
+
+        function selectOption(el, val) {
+            playSound('click');
+            document.querySelectorAll('.option-card').forEach(card => card.classList.remove('selected'));
+            el.classList.add('selected');
+            currentLesson.selectedOption = val;
+        }
+
+        function checkAnswer() {
+            const q = currentLesson.questions[currentLesson.qIndex];
+            let isCorrect = false;
+
+            if (q.type === 'assemble') {
+                const builtString = currentLesson.assemblySlots.map(s => s.syllable).join('');
+                if (!builtString) return;
+                isCorrect = (builtString === q.target.kr);
+            } else {
+                if (!currentLesson.selectedOption) return;
+                isCorrect = (q.type === 'kr2jp') ? 
+                    currentLesson.selectedOption === q.target.jp : 
+                    currentLesson.selectedOption === q.target.kr;
+            }
+
+            const sheet = document.getElementById('feedback-sheet');
+            const title = document.getElementById('feedback-title');
+            const body = document.getElementById('feedback-body');
+
+            if (isCorrect) {
+                playSound('correct');
+                speakKorean(q.target.kr);
+                sheet.className = 'feedback-sheet correct';
+                title.innerHTML = '✓ 正解！';
+                body.innerText = `素晴らしい！ ${q.target.kr} = ${q.target.jp}`;
+                currentLesson.correctCount++;
+            } else {
+                playSound('wrong');
+                sheet.className = 'feedback-sheet incorrect';
+                title.innerHTML = '✕ 残念...';
+                body.innerText = `正解は: ${q.target.kr} ➡ ${q.target.jp}`;
+                saveState();
+            }
+
+            sheet.style.display = 'flex';
+        }
+
+        function nextQuestion() {
+            currentLesson.qIndex++;
+            if (currentLesson.qIndex < currentLesson.questions.length) {
+                renderQuestion();
+            } else {
+                finishLesson();
+            }
+        }
+
+        function finishLesson() {
+            const content = document.getElementById('lesson-content');
+            document.getElementById('feedback-sheet').style.display = 'none';
+
+            if (currentLesson.unit.id !== 99 && !state.completedNodes.includes(currentLesson.unit.id)) {
+                state.completedNodes.push(currentLesson.unit.id);
+            }
+            saveState();
+
+            launchConfetti();
+
+            content.innerHTML = `
+                <div class="result-card">
+                    <div class="result-title">🎉 レッスン完了！</div>
+                    <div class="result-stats">
+                        <div class="result-stat-box">
+                            <div class="result-stat-val" style="color:var(--primary-dark);">${currentLesson.correctCount} / ${currentLesson.questions.length}</div>
+                            <div class="result-stat-lbl">正解数</div>
+                        </div>
+                    </div>
+                    <button class="big-btn" onclick="exitLesson()">コースに戻る</button>
+                </div>
+            `;
+        }
+
+        function exitLesson() {
+            document.getElementById('lesson-overlay').classList.remove('active');
+            renderCoursePath();
+        }
+
+        // --- SPEED MATCH GAME LOGIC ---
+        let speedState = {
+            timer: 30,
+            score: 0,
+            selectedKr: null,
+            selectedJp: null,
+            matchedCount: 0,
+            interval: null,
+            krList: [],
+            jpList: []
+        };
+
+        function startSpeedGame() {
+            playSound('click');
+            speedState.score = 0;
+            speedState.timer = 30;
+            speedState.selectedKr = null;
+            speedState.selectedJp = null;
+
+            document.getElementById('speed-score').innerText = `Score: 0`;
+            const timerBar = document.getElementById('speed-timer');
+            timerBar.style.width = '100%';
+
+            renderSpeedGrid();
+
+            if (speedState.interval) clearInterval(speedState.interval);
+            speedState.interval = setInterval(() => {
+                speedState.timer--;
+                timerBar.style.width = `${(speedState.timer / 30) * 100}%`;
+                if (speedState.timer <= 0) {
+                    clearInterval(speedState.interval);
+                    playSound('correct');
+                    alert(`ゲーム終了！ スコア: ${speedState.score}`);
+                    saveState();
+                }
+            }, 1000);
+        }
+
+        function renderSpeedGrid() {
+            const grid = document.getElementById('speed-match-grid');
+            const pool = getGamePool('All');
+            const shuffled = [...pool].sort(() => Math.random() - 0.5).slice(0, 4);
+
+            const krList = shuffled.map(c => ({ id: c.id, text: c.kr })).sort(() => Math.random() - 0.5);
+            const jpList = shuffled.map(c => ({ id: c.id, text: c.jp })).sort(() => Math.random() - 0.5);
+
+            speedState.krList = krList;
+            speedState.jpList = jpList;
+            speedState.selectedKr = null;
+            speedState.selectedJp = null;
+            speedState.matchedCount = 0;
+
+            let html = `
+                <div class="match-col">
+                    <div class="match-col-header">🇰🇷 韓国語 (ハングル)</div>
+                    ${krList.map((item, idx) => `
+                        <div class="match-tile" id="speed-tile-kr-${idx}" onclick="selectSpeedTile('kr', ${idx}, ${item.id})">
+                            ${item.text}
+                        </div>
+                    `).join('')}
+                </div>
+                <div class="match-col">
+                    <div class="match-col-header">🇯🇵 日本語名</div>
+                    ${jpList.map((item, idx) => `
+                        <div class="match-tile" id="speed-tile-jp-${idx}" onclick="selectSpeedTile('jp', ${idx}, ${item.id})">
+                            ${item.text}
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            grid.innerHTML = html;
+        }
+
+        function selectSpeedTile(type, idx, id) {
+            const tile = document.getElementById(`speed-tile-${type}-${idx}`);
+            if (!tile || tile.classList.contains('matched')) return;
+
+            playSound('click');
+
+            if (type === 'kr') {
+                document.querySelectorAll('.match-col:nth-child(1) .match-tile').forEach(el => el.classList.remove('selected'));
+                tile.classList.add('selected');
+                speedState.selectedKr = { idx, id };
+            } else {
+                document.querySelectorAll('.match-col:nth-child(2) .match-tile').forEach(el => el.classList.remove('selected'));
+                tile.classList.add('selected');
+                speedState.selectedJp = { idx, id };
+            }
+
+            if (speedState.selectedKr && speedState.selectedJp) {
+                const krSel = speedState.selectedKr;
+                const jpSel = speedState.selectedJp;
+
+                if (krSel.id === jpSel.id) {
+                    playSound('correct');
+                    document.getElementById(`speed-tile-kr-${krSel.idx}`).classList.add('matched');
+                    document.getElementById(`speed-tile-jp-${jpSel.idx}`).classList.add('matched');
+                    speedState.score += 10;
+                    speedState.matchedCount++;
+                    document.getElementById('speed-score').innerText = `Score: ${speedState.score}`;
+
+                    speedState.selectedKr = null;
+                    speedState.selectedJp = null;
+
+                    if (speedState.matchedCount >= 4) {
+                        setTimeout(() => renderSpeedGrid(), 300);
+                    }
+                } else {
+                    playSound('wrong');
+                    setTimeout(() => {
+                        const krEl = document.getElementById(`speed-tile-kr-${krSel.idx}`);
+                        const jpEl = document.getElementById(`speed-tile-jp-${jpSel.idx}`);
+                        if (krEl) krEl.classList.remove('selected');
+                        if (jpEl) jpEl.classList.remove('selected');
+                    }, 300);
+                    speedState.selectedKr = null;
+                    speedState.selectedJp = null;
+                }
+            }
+        }
+
+        // --- CONFETTI PARTICLE ANIMATION ---
+        function launchConfetti() {
+            const canvas = document.getElementById('confetti-canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            const particles = [];
+            const colors = ['#58cc02', '#1cb0f6', '#ce82ff', '#ffc800', '#ff4b4b'];
+
+            for (let i = 0; i < 80; i++) {
+                particles.push({
+                    x: canvas.width / 2,
+                    y: canvas.height / 2,
+                    vx: (Math.random() - 0.5) * 12,
+                    vy: (Math.random() - 0.8) * 14,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    size: Math.random() * 8 + 4,
+                    rotation: Math.random() * 360,
+                    rotSpeed: (Math.random() - 0.5) * 10
+                });
+            }
+
+            let frame = 0;
+            function animate() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                particles.forEach(p => {
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.vy += 0.4;
+                    p.rotation += p.rotSpeed;
+
+                    ctx.save();
+                    ctx.translate(p.x, p.y);
+                    ctx.rotate((p.rotation * Math.PI) / 180);
+                    ctx.fillStyle = p.color;
+                    ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+                    ctx.restore();
+                });
+
+                frame++;
+                if (frame < 120) requestAnimationFrame(animate);
+                else ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }
+            animate();
+        }
+
+        // Initialize App
+        loadState();
+        showView('course');
+    </script>
+</body>
+</html>
