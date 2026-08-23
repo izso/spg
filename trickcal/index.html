@@ -2471,12 +2471,12 @@
             distractors.sort(() => Math.random() - 0.5);
 
             if (q.type === 'assemble') {
-                const targetSyllables = Array.from(q.target.kr);
+                const targetSyllables = Array.from(q.target.kr).filter(s => s.trim() !== '');
                 
                 let distractorSyllables = [];
                 for (let d of distractors) {
                     for (let s of Array.from(d.kr)) {
-                        if (!targetSyllables.includes(s) && !distractorSyllables.includes(s)) {
+                        if (s.trim() !== '' && !targetSyllables.includes(s) && !distractorSyllables.includes(s)) {
                             distractorSyllables.push(s);
                         }
                         if (distractorSyllables.length >= 3) break;
