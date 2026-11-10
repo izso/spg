@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#8d4f24">
+  <title>ころころ役くらべ | サイコロ対戦ゲーム</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="game">
+    <header class="topbar">
+      <div class="brand"><span class="brand-die">⚄</span><div><small>FAN MADE DICE GAME</small><h1>ころころ役くらべ</h1></div></div>
+      <div class="top-actions"><span id="yellow-cards" class="penalties">カード 0 / 3</span><button id="help-button" class="round-button" type="button" aria-label="遊び方を開く">？</button></div>
+    </header>
+
+    <div class="board">
+      <section class="sheet" aria-label="スコアシート">
+        <div class="sheet-top"><span class="round-seal">ROUND <strong id="round-number">1 / 8</strong></span><span class="sheet-title">スコアシート</span></div>
+        <div class="scoreboard" aria-label="対戦スコア"><div>あなた <strong id="player-total">0</strong></div><span>VS</span><div>相手 <strong id="cpu-total">0</strong></div></div>
+        <div class="sheet-head"><span>役</span><span>あなた</span><span>相手</span></div>
+        <div id="score-rows"></div>
+        <div class="bonus-row"><span>数字ボーナス<small>2〜6の合計が55点以上</small></span><strong id="player-bonus">—</strong><strong id="cpu-bonus">—</strong></div>
+        <button id="register-button" class="register-button" type="button" disabled><span>役を登録</span><b>➜</b></button>
+      </section>
+
+      <section class="arena" aria-label="ダイスを振る">
+        <div class="arena-top"><div class="turn-plaque"><small>YOUR TURN</small><strong id="turn-title">最初のダイスを振ろう</strong></div><div class="timer-badge"><small>残り時間</small><strong id="timer">–</strong></div></div>
+        <div class="play-row"><div class="table-area">
+          <div class="table-heading"><span>◆ ダイステーブル ◆</span><span id="roll-count">残り 3 回</span></div>
+          <div id="kept-dice" class="kept-dice" aria-label="キープしたダイス"></div>
+          <div class="play-floor"><div id="dice" class="dice-row" aria-label="5個のダイス"></div><div id="role-burst" class="role-burst" aria-live="polite"></div></div>
+          <p id="status" class="status" aria-live="polite">カップを押してダイスを振ろう</p>
+          <div class="table-bottom"><span>ダイスをタップしてキープ</span><span>緑の ✦ は好きな数字</span></div>
+        </div>
+        <div class="control-area"><button id="roll-button" class="dice-cup" type="button" aria-label="ダイスを振る"><span class="cup-body"><span class="cup-rim"></span><span class="cup-shine"></span><span class="cup-star">✦</span></span><span class="cup-label">カップを振る</span></button><button id="chance-button" class="chance-button" type="button"><span class="chance-icon">✦</span><span>イカサマ</span><small>1回だけ</small></button></div></div>
+        <div class="arena-note">イカサマは振る前に発動。このラウンドのダイスがすべて緑になります。</div>
+      </section>
+    </div>
+    <footer>非公式の再現ゲームです。ゲーム内の報酬やアカウントとは連動しません。 <a href="https://gamewith.jp/trickcal/576686" target="_blank" rel="noopener noreferrer">参考ルール</a></footer>
+  </main>
+
+  <div id="screen-flash" class="screen-flash" aria-hidden="true"></div>
+  <div id="celebration" class="celebration" aria-live="assertive"><div class="celebration-inner"><small id="celebration-kicker"></small><strong id="celebration-title"></strong><span id="celebration-score"></span></div></div>
+  <div id="particles" class="particles" aria-hidden="true"></div>
+
+  <dialog id="help-dialog"><div class="dialog-content"><button id="close-help" class="dialog-close" type="button" aria-label="閉じる">×</button><small>HOW TO PLAY</small><h2>遊び方</h2><p>カップを押して5個のダイスを振ります。残したいダイスをタップしてキープし、1ラウンドで最大3回まで振れます。</p><p>左のスコアシートから役を1つ選んで登録してください。各役は1回だけ使えます。8ラウンド後、数字ボーナスを足した合計点で勝敗が決まります。</p><p>緑のダイスの ✦ は好きな数字です。✦ と1だけのヨットは70点。時間切れ2回ごとにイエローカードを1枚受け取り、3枚で敗北します。</p><button id="start-button" class="dialog-action" type="button">遊びはじめる ➜</button></div></dialog>
+  <dialog id="result-dialog"><div class="dialog-content result-content"><small>GAME OVER</small><div id="result-icon" class="result-icon">✦</div><h2 id="result-title"></h2><p id="result-detail"></p><button id="again-button" class="dialog-action" type="button">もう一度遊ぶ ➜</button></div></dialog>
+  <script src="game.js"></script>
+</body>
+</html>
